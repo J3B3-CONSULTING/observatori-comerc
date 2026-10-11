@@ -45,4 +45,12 @@ jobs:
         - name: Build DuckDB (capa de dades pel chatbot)
           run: |
             cd $GITHUB_WORKSPACE
-            python data/sql/migrate.py 
+            python data/sql/migrate.py
+
+        # El motor escriu data/cache/fets.csv, que llegeix el snapshot del newsletter.
+        - name: Commit fets
+          run: |
+            git add data/cache/fets.csv
+            git diff --staged --quiet || git commit -m "Fets del motor $(date +%Y-%m-%d)"
+            git pull --rebase
+            git push

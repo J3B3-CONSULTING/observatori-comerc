@@ -2064,6 +2064,7 @@ CACHES_NO_VIGILATS = {
     "prediccions_estructura",   # projeccions internes pròpies, no una font externa
     "lideres_empreses",         # export manual SABI, sense columna de data i ritme irregular
     "municipal",                # només local (OBSERVATORI_LOCAL=1), no es publica
+    "fets",                     # lectures del motor de fets (data/sql/fets.py), no una font
 }
 
 

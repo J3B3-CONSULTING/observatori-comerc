@@ -680,6 +680,22 @@ def _desa(con, s, tidy):
     print(f"    {len(tidy)} files, {date_start} .. {date_end}")
 
 
+FETS_CSV = os.path.join(os.path.dirname(__file__), "..", "cache", "fets.csv")
+
+
+def _exporta_fets(fets):
+    """Còpia dels fets en CSV versionat, per als consumidors sense DuckDB (el
+    snapshot del newsletter clona el repo i llegeix data/cache). Ordre i
+    arrodoniment fixos: el diff entre dies només mostra fets que canvien."""
+    textos = {a["avis_codi"]: a["text"] for a in DIM_AVIS}
+    df = fets.copy()
+    df["avisos_text"] = df["avis"].map(
+        lambda v: " | ".join(textos[c] for c in v.split(",")) if v else None)
+    for c in ("valor", "valor_referencia", "rellevancia"):
+        df[c] = df[c].astype(float).round(4)
+    df.sort_values("fet_id").to_csv(FETS_CSV, index=False)
+
+
 def migrate(db_path=DB_PATH, series=None):
     if series is None:
         series = SERIES + SERIES_EXTRA
@@ -730,6 +746,7 @@ def migrate(db_path=DB_PATH, series=None):
     con.register("fets_df", fets)
     con.execute("INSERT INTO fets SELECT * FROM fets_df")
     con.unregister("fets_df")
+    _exporta_fets(fets)
     print(f"    {len(fets)} fets ({', '.join(f'{k}: {v}' for k, v in fets['regla'].value_counts().items())})")
 
     n_series = con.execute("SELECT count(*) FROM series_metadata").fetchone()[0]
