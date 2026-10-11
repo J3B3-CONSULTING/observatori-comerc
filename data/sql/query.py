@@ -1,5 +1,5 @@
 """
-Capa de consulta pel chatbot de retail: 7 funcions deterministes sobre
+Capa de consulta pel chatbot de retail: 9 funcions deterministes sobre
 observatori.duckdb (esquema a schema.sql, migració a migrate.py).
 
 Principis:
@@ -436,5 +436,105 @@ def get_macro_context(date_start=None, date_end=None):
         metadata = {sid: _get_metadata(con, sid)
                     for sid in ["ipc", "ipc_coicop"] + list(_CONFIANZA_SERIES.values())}
         return {"ipc": ipc, "confianza": confianza, "metadata": metadata}
+    finally:
+        con.close()
+
+
+# ─── 8. Fets (motor de fets, data/sql/fets.py) ───────────────────────────────
+
+_FET_COLS = ["fet_id", "regla", "enunciat", "valor", "unitat", "comparacio",
+             "valor_referencia", "data", "series", "geo_codi", "cnae_codi", "avis",
+             "rellevancia"]
+
+
+def get_facts(regla=None, geo_codi=None, cnae_codi=None, serie_id=None, limit=20):
+    """Fets ja redactats pel motor, ordenats per rellevància. Cada fet porta les
+    sèries d'on surt (amb nom i font) i el text dels avisos de qualitat: el model
+    els ha de citar tal com venen, sense recalcular-los.
+    Filtres: regla (extrem, ratxa, inflexio, ranking, divergencia,
+    quadrant_branca, saturacio), geo_codi ('ccaa:09'), cnae_codi ('477'),
+    serie_id (fets que fan servir aquesta sèrie)."""
+    con = _connect()
+    try:
+        clauses, params = [], []
+        for col, v in (("regla", regla), ("geo_codi", geo_codi), ("cnae_codi", cnae_codi)):
+            if v is not None:
+                clauses.append(f"{col} = ?")
+                params.append(v)
+        if serie_id is not None:
+            clauses.append("list_contains(string_split(series, ','), ?)")
+            params.append(serie_id)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        total = con.execute(f"SELECT count(*) FROM fets {where}", params).fetchone()[0]
+        if total == 0:
+            regles = [r[0] for r in con.execute(
+                "SELECT DISTINCT regla FROM fets ORDER BY 1").fetchall()]
+            return {"error": "cap fet amb aquests filtres", "regles_disponibles": regles,
+                    "facts": [], "total_available": 0}
+        rows = con.execute(f"""
+            SELECT {", ".join(_FET_COLS)} FROM fets {where}
+            ORDER BY rellevancia DESC, data DESC, fet_id LIMIT ?
+        """, params + [limit]).fetchall()
+
+        textos_avis = dict(con.execute("SELECT avis_codi, text FROM dim_avis").fetchall())
+        fonts = {r[0]: {"serie_id": r[0], "name": r[1], "source": r[2]} for r in con.execute(
+            "SELECT serie_id, name, source FROM series_metadata").fetchall()}
+        facts = []
+        for r in rows:
+            f = dict(zip(_FET_COLS, r))
+            f["data"] = _iso(f["data"])
+            f["fonts"] = [fonts[s] for s in f.pop("series").split(",") if s in fonts]
+            codis = f.pop("avis")
+            f["avisos"] = [dict(codi=c, text=textos_avis[c])
+                           for c in (codis.split(",") if codis else [])]
+            facts.append(f)
+        return {"facts": facts, "total_available": total, "returned": len(facts)}
+    finally:
+        con.close()
+
+
+# ─── 9. Indicadors derivats per clau comuna ──────────────────────────────────
+
+def get_derived(serie_id=None, geo_codi=None, cnae_codi=None, limit=100):
+    """Sense serie_id: catàleg dels indicadors derivats (fórmula, sèries d'origen,
+    unitat). Amb serie_id: els valors filtrats per les claus comunes geo_codi i
+    cnae_codi (no per etiquetes de text), les 'limit' observacions més recents,
+    amb la metadata i els avisos."""
+    con = _connect()
+    try:
+        if serie_id is None:
+            cols = ["serie_id", "name", "description", "formula", "fonts_origen",
+                    "frequency", "date_start", "date_end"]
+            rows = con.execute(f"""
+                SELECT {", ".join(cols)} FROM series_metadata
+                WHERE is_derived AND formula IS NOT NULL ORDER BY serie_id
+            """).fetchall()
+            derivats = [dict(zip(cols, r)) for r in rows]
+            for d in derivats:
+                d["date_start"], d["date_end"] = _iso(d["date_start"]), _iso(d["date_end"])
+            return {"derived": derivats, "count": len(derivats)}
+
+        meta = _get_metadata(con, serie_id)
+        if meta is None or not meta["is_derived"] or not meta["formula"]:
+            return {"error": f"no és un indicador derivat: {serie_id}",
+                    "suggestions": difflib.get_close_matches(
+                        serie_id, [s for s in _all_serie_ids(con) if s.startswith("der_")],
+                        n=5, cutoff=0.3)}
+        clauses, params = ["serie_id = ?"], [serie_id]
+        for col, v in (("geo_codi", geo_codi), ("cnae_codi", cnae_codi)):
+            if v is not None:
+                clauses.append(f"{col} = ?")
+                params.append(v)
+        where = " AND ".join(clauses)
+        total = con.execute(f"SELECT count(*) FROM observations WHERE {where}",
+                            params).fetchone()[0]
+        rows = con.execute(f"""
+            SELECT date, value, geo_codi, cnae_codi, dim_1, avis FROM observations
+            WHERE {where} ORDER BY date DESC, geo_codi, cnae_codi LIMIT ?
+        """, params + [limit]).fetchall()
+        points = [{"date": _iso(r[0]), "value": r[1], "geo_codi": r[2], "cnae_codi": r[3],
+                   "dim_1": r[4], "avis": r[5]} for r in reversed(rows)]
+        return {"serie_id": serie_id, "points": points, "total_available": total,
+                "returned": len(points), "metadata": meta}
     finally:
         con.close()

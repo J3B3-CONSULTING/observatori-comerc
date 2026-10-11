@@ -232,6 +232,10 @@ DIM_AVIS = [
     dict(avis_codi="abast_diferent",
          text="Ràtio entre dues fonts que no mesuren el mateix univers: serveix per a "
               "l'ordre de magnitud i la tendència, no com a xifra exacta."),
+    dict(avis_codi="lloc_de_venda",
+         text="Les vendes es compten on es ven, no on viuen els compradors: el turisme "
+              "i la centralitat comercial pugen les vendes per habitant d'una comunitat "
+              "sense que n'hi hagi més demanda local."),
 ]
 
 

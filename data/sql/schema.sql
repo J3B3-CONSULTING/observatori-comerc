@@ -63,6 +63,23 @@ CREATE TABLE IF NOT EXISTS dim_territori (
     codi_eurostat VARCHAR
 );
 
+-- Motor de fets (data/sql/fets.py): es regenera sencera a cada migració.
+CREATE TABLE IF NOT EXISTS fets (
+    fet_id           VARCHAR PRIMARY KEY,  -- regla:serie:territori:branca, estable entre migracions
+    regla            VARCHAR NOT NULL,     -- extrem | ratxa | inflexio | ranking | divergencia | quadrant_branca | saturacio
+    enunciat         VARCHAR NOT NULL,
+    valor            DOUBLE,
+    unitat           VARCHAR,
+    comparacio       VARCHAR,              -- amb què es compara el valor, en text
+    valor_referencia DOUBLE,
+    data             DATE NOT NULL,        -- període del darrer valor que sosté el fet
+    series           VARCHAR NOT NULL,     -- serie_id d'origen, separats per comes
+    geo_codi         VARCHAR,
+    cnae_codi        VARCHAR,
+    avis             VARCHAR,              -- codis de dim_avis heretats, separats per comes
+    rellevancia      DOUBLE                -- ordre orientatiu entre fets
+);
+
 CREATE TABLE IF NOT EXISTS dim_branca (
     cnae_codi     VARCHAR PRIMARY KEY,   -- G, 47, 471, 4711, 47_ALIM...
     nivell        VARCHAR NOT NULL,      -- 'seccio' | 'divisio' | 'grup' | 'classe' | 'agregat_icm'

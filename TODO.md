@@ -33,9 +33,26 @@ Pendents de la llista:
 | Saturació: densitat contra vendes per CCAA | locals per 1.000 hab + `der_vendes_per_habitant_real` | Les dues sèries ja comparteixen `geo_codi`; la lectura va al motor de fets |
 | Divergència amb el CDMGE | CDMGE + ICM + TPV | Aclarir què mesura cada indicador del CDMGE abans d'agregar-lo a trimestres |
 
-### 3. Motor de fets (~2 dies)
+### 3. Motor de fets — primera versió FETA 2026-10-11
 
-Regles deterministes sobre sèries i derivats (màxim o mínim des de quan, canvis de posició al rànquing de CCAA, inflexions, divergències entre fonts per sobre d'un llindar). Sortida: taula `fets` (enunciat, valor, comparació, fonts, data, avisos), que alimenta el xatbot (`get_facts`, `get_derived`), la tesi de la portada, la newsletter i les candidates a predicció.
+`data/sql/fets.py`: set regles deterministes que `migrate.py` executa després dels derivats. Escriuen la taula `fets` (enunciat redactat, valor, comparació, valor de referència, sèries d'origen, claus, avisos heretats, rellevància), que es regenera sencera a cada migració. `query.py` hi afegeix `get_facts` (filtres per regla, `geo_codi`, `cnae_codi` i sèrie; cada fet porta fonts i text dels avisos) i `get_derived` (catàleg de derivats o valors per clau comuna). Amb les dades del 10/10 surten 80 fets.
+
+| Regla | Què detecta | Llindar |
+|---|---|---|
+| extrem | darrer valor més alt o més baix des de fa N anys | 2 anys, comparació estricta |
+| ratxa | períodes seguits amb el mateix signe | 6 mesos, 3 trimestres o 3 anys |
+| inflexio | canvi de signe després d'una ratxa | ratxa prèvia de 3 mesos o 2 trimestres; valor nou de 0,5 o més |
+| ranking | salt de posició d'una CCAA, i qui encapçala o tanca | 3 llocs; Ceuta i Melilla fora |
+| divergencia | dues fonts que s'separen | targeta − ICM 5%; deflactor − IPC 2% |
+| quadrant_branca | creixement de vendes reals × marge (EBE/vendes) contra la mediana de branques | banda de 0,5 al voltant de la mediana |
+| saturacio | locals per 1.000 hab. × vendes per habitant contra Espanya | banda del 3%; avís nou `lloc_de_venda` |
+
+Sèries vigilades (extrem, ratxa, inflexió): `VIGILADES` a `fets.py`. Per afegir-ne una, una línia amb filtres i etiqueta.
+
+Pendent:
+- Connectar els fets a la tesi de la portada, a la newsletter i a les candidates a predicció (avui només els llegeix `query.py`).
+- Revisar els llindars amb un parell de mesos de fets reals: el rànquing de creixement anual (pes 0,5) encara genera molts salts.
+- Regla de divergència CDMGE contra ICM, quan s'aclareixi què mesura cada indicador del CDMGE (taula del pas 2).
 
 ### 4. Fonts noves oficials i gratuïtes
 

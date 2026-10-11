@@ -24,6 +24,7 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from data.config import TRENCAMENTS_DIRCE, nota_trencament_dirce  # noqa: E402
 from data.sql.derivats import DERIVATS  # noqa: E402
+from data.sql.fets import construeix as construeix_fets  # noqa: E402
 from data.sql.dimensions import (  # noqa: E402
     ALIES_BRANCA, ALIES_CCAA_INE, ALIES_PROV_INE, ALIES_TERRITORI,
     DIM_AVIS, DIM_BRANCA, DIM_TERRITORI, resol,
@@ -720,6 +721,16 @@ def migrate(db_path=DB_PATH, series=None):
                      ("is_critical", False), ("is_derived", True), ("is_public", True)]:
             tidy[k] = v
         _desa(con, s, tidy)
+
+    # Fets: lectures sobre sèries i derivats ja desats.
+    print("  Generant fets...")
+    fets = construeix_fets(con)
+    _comprova_avis("fets", fets["avis"])
+    con.execute("DELETE FROM fets")
+    con.register("fets_df", fets)
+    con.execute("INSERT INTO fets SELECT * FROM fets_df")
+    con.unregister("fets_df")
+    print(f"    {len(fets)} fets ({', '.join(f'{k}: {v}' for k, v in fets['regla'].value_counts().items())})")
 
     n_series = con.execute("SELECT count(*) FROM series_metadata").fetchone()[0]
     n_obs = con.execute("SELECT count(*) FROM observations").fetchone()[0]
