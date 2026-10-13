@@ -319,3 +319,12 @@ tanca la finestra. El que explica: 24 punts de mitjana mòbil i **els 24 per sot
 zero**; el forat es va tancar fins a −0,2 punts el maig del 2025 i s'ha tornat a obrir
 fins a −4,1 el març del 2026, i ara és de −3,2. Que mai creuï el zero és el que aguanta
 el diagnòstic quan un mes solt els va a favor, com el juliol (+1,2).
+
+## Validació de salts a `data/processor.py` — prioritat baixa
+
+`_is_valid_series` calcula el ràtio entre valors consecutius (`max_jump`) i dona fals positius en dues sèries, que cada dia surten com a `[AVIS]` al log:
+
+- `confianza_consumidor/index_confianca`, 34,5×: abril del 2020, de +0,6 a −20,7. El salt és real (COVID) i el ràtio s'infla perquè el valor anterior és proper a zero.
+- `cdmge/valor`, 995,0×: `tasa_mensual` l'1/06/2026, de 0,5 a 497,5. Els primers dies del mes la base acumulada és de pocs dècimes i la taxa explota; hi ha 19 casos de més de 50×.
+
+Proposta: per a les sèries de taxes (variacions, índexs de confiança), validar amb la **diferència absoluta** entre valors consecutius en lloc del ràtio, i deixar el ràtio per als nivells (euros, files, unitats). Sense tocar res fins que es decideixi.
