@@ -690,7 +690,7 @@ def _exporta_fets(fets):
     textos = {a["avis_codi"]: a["text"] for a in DIM_AVIS}
     df = fets.copy()
     df["avisos_text"] = df["avis"].map(
-        lambda v: " | ".join(textos[c] for c in v.split(",")) if v else None)
+        lambda v: " | ".join(textos[c] for c in v.split(",")) if isinstance(v, str) and v else None)
     for c in ("valor", "valor_referencia", "rellevancia"):
         df[c] = df[c].astype(float).round(4)
     df.sort_values("fet_id").to_csv(FETS_CSV, index=False)
