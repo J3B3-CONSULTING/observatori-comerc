@@ -42,7 +42,7 @@
   "europa_vab": {
     "estat": "ok",
     "font": "api_eurostat",
-    "missatge": "883 files"
+    "missatge": "884 files"
   },
   "icm": {
     "estat": "ok",
@@ -57,7 +57,7 @@
   "ipc_coicop": {
     "estat": "ok",
     "font": "api_ine",
-    "missatge": "1184 files"
+    "missatge": "1188 files"
   },
   "locals_ccaa_grups": {
     "estat": "ok",

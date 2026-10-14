@@ -295,6 +295,7 @@ any,mes,grup_codi,grup,ipc,periode
 2026,6,00,Índex general,103.598,2026-06
 2026,7,00,Índex general,103.899,2026-07
 2026,8,00,Índex general,104.638,2026-08
+2026,9,00,Índex general,104.978,2026-09
 2002,1,01,Alimentació i begudes no alcohòliques,49.796,2002-01
 2002,2,01,Alimentació i begudes no alcohòliques,49.779,2002-02
 2002,3,01,Alimentació i begudes no alcohòliques,50.042,2002-03
@@ -591,6 +592,7 @@ any,mes,grup_codi,grup,ipc,periode
 2026,6,01,Alimentació i begudes no alcohòliques,102.527,2026-06
 2026,7,01,Alimentació i begudes no alcohòliques,101.843,2026-07
 2026,8,01,Alimentació i begudes no alcohòliques,101.71,2026-08
+2026,9,01,Alimentació i begudes no alcohòliques,101.934,2026-09
 2002,1,03,Vestit i calçat,77.799,2002-01
 2002,2,03,Vestit i calçat,76.919,2002-02
 2002,3,03,Vestit i calçat,78.553,2002-03
@@ -887,6 +889,7 @@ any,mes,grup_codi,grup,ipc,periode
 2026,6,03,Vestit i calçat,103.194,2026-06
 2026,7,03,Vestit i calçat,92.649,2026-07
 2026,8,03,Vestit i calçat,91.743,2026-08
+2026,9,03,Vestit i calçat,98.092,2026-09
 2002,1,05,Parament de la llar,71.792,2002-01
 2002,2,05,Parament de la llar,71.891,2002-02
 2002,3,05,Parament de la llar,72.194,2002-03
@@ -1183,3 +1186,4 @@ any,mes,grup_codi,grup,ipc,periode
 2026,6,05,Parament de la llar,101.563,2026-06
 2026,7,05,Parament de la llar,101.264,2026-07
 2026,8,05,Parament de la llar,101.245,2026-08
+2026,9,05,Parament de la llar,101.45,2026-09
