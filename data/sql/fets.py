@@ -145,6 +145,10 @@ VIGILADES = [
     dict(serie_id="der_icm_productivitat_var_anual",
          filtres=dict(geo_codi="pais:ES", cnae_codi="47"), tipus="variacio", fmt="pct",
          etiqueta="vendes reals per persona ocupada, variació interanual"),
+    # Eurostat (CVEC, base 2021): alimentació contra no alimentari; l'internet ja el porta l'ICM.
+    dict(serie_id="europa_retail_branques_yoy", filtres=dict(geo_codi="pais:ES"),
+         cnae=["47_STS_ALIM", "47_STS_NOALIM"], tipus="variacio", fmt="pct",
+         etiqueta="volum de vendes ({branca}, Eurostat), variació interanual"),
     dict(serie_id="targetes_tpv_var_import", filtres={}, tipus="variacio", fmt="pct",
          etiqueta="import pagat amb targeta en TPV, variació interanual"),
     dict(serie_id="der_tpv_menys_icm", filtres={}, tipus="variacio", fmt="pct",
