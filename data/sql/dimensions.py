@@ -198,9 +198,9 @@ _BRANCA = {
         "Salud (4773+4774+4775)"]),
     "47_RESTA": ("Resta (4719+474+475+476+477+478+479)", "agregat_icm", "47", [
         "Resto (4719+474+475+476+477+478+479)"]),
-    "47_STS_ALIM": ("Alimentació, begudes i tabac (Eurostat)", "agregat_sts", "47", [
+    "47_STS_ALIM": ("Alimentació, begudes i tabac segons Eurostat", "agregat_sts", "47", [
         "G47_FOOD"]),
-    "47_STS_NOALIM": ("No alimentari sense carburant (Eurostat)", "agregat_sts", "47", [
+    "47_STS_NOALIM": ("No alimentari sense carburant segons Eurostat", "agregat_sts", "47", [
         "G47_NFOOD_X_G473"]),
 }
 
