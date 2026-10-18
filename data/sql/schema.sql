@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS fets (
 
 CREATE TABLE IF NOT EXISTS dim_branca (
     cnae_codi     VARCHAR PRIMARY KEY,   -- G, 47, 471, 4711, 47_ALIM...
-    nivell        VARCHAR NOT NULL,      -- 'seccio' | 'divisio' | 'grup' | 'classe' | 'agregat_icm'
+    nivell        VARCHAR NOT NULL,      -- 'seccio' | 'divisio' | 'grup' | 'classe' | 'agregat_icm' | 'agregat_sts'
     nom           VARCHAR NOT NULL,
     cnae_pare     VARCHAR
 );

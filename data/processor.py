@@ -1595,6 +1595,37 @@ def process_europa_retail_mensual():
     return df
 
 
+def process_europa_retail_branques():
+    """
+    Volum de vendes mensual del comerç al detall per branca (Eurostat sts_trtu_m):
+    alimentació, no alimentari, farmàcia, internet... per a Espanya, UE-27,
+    Eurozona i quatre països veïns. Base 2021=100, ajustat estacional.
+    Cau silenciosament al cache existent si l'API falla.
+    """
+    print("  Carregant retail mensual per branca Eurostat (sts_trtu_m)...")
+    try:
+        df = eurostat.fetch_retail_volume_branques()
+    except Exception as e:
+        print(f"  Error API Eurostat retail per branca: {e}")
+        df_cache = load_cache("europa_retail_branques")
+        _record_status("europa_retail_branques", "fallback" if not df_cache.empty else "error",
+                       "cache", f"Excepcio API: {e}")
+        return df_cache
+
+    if df.empty:
+        print("  AVIS: sense dades; mantenint cache existent")
+        df_cache = load_cache("europa_retail_branques")
+        _record_status("europa_retail_branques", "fallback" if not df_cache.empty else "error",
+                       "cache", "API Eurostat sts_trtu_m (branques) buida")
+        return df_cache
+
+    df = df.sort_values(["pais_codi", "nace_codi", "periode"]).reset_index(drop=True)
+    df["yoy"] = df.groupby(["pais_codi", "nace_codi"])["index_volum"].pct_change(periods=12) * 100
+    save_cache(df, "europa_retail_branques")
+    _record_status("europa_retail_branques", "ok", "api_eurostat", f"{len(df)} files")
+    return df
+
+
 def process_digitalitzacio_comerc():
     """
     Radiografia de digitalització del comerç (NACE G47): % d'empreses que
@@ -2036,6 +2067,7 @@ DATASETS_VIGILATS = {
     "icm_distribucion":      {"col": "data",    "ca": "ICM per format de venda",    "es": "ICM por formato de venta"},
     "eaes":                  {"col": "any",     "ca": "Salaris (EAES)",             "es": "Salarios (EAES)"},
     "europa_retail_mensual": {"col": "periode", "ca": "Comerç a Europa (mensual)",  "es": "Comercio en Europa (mensual)"},
+    "europa_retail_branques": {"col": "periode", "ca": "Comerç a Europa per branca (mensual)", "es": "Comercio en Europa por rama (mensual)"},
     "digitalitzacio_comerc": {"col": "any", "ca": "Digitalització del comerç", "es": "Digitalización del comercio"},
     "ocupacio_comerc": {"col": "any", "ca": "Ocupació per sexe i edat", "es": "Ocupación por sexo y edad"},
     "cdmge":                 {"col": "data",    "ca": "Pols diari",                 "es": "Pulso diario"},
@@ -2274,6 +2306,9 @@ def process_all():
 
     print("\n5b. Europa retail mensual (Eurostat sts_trtu_m):")
     process_europa_retail_mensual()
+
+    print("\n5b2. Europa retail mensual per branca (Eurostat sts_trtu_m):")
+    process_europa_retail_branques()
 
     print("\n5c. Digitalització del comerç (Eurostat TIC: e-commerce/IA/núvol):")
     process_digitalitzacio_comerc()

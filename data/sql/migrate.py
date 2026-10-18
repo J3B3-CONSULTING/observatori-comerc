@@ -303,6 +303,19 @@ _add("europa_retail_mensual_yoy", "Europa — volum de vendes retail (variació 
      "Eurostat", "sts_trtu_m", "monthly", "% variació anual", True, False,
      "europa_retail_mensual", "yoy", _periode_monthly_date, dim_cols=["pais"])
 
+# --- europa_retail_branques (Eurostat sts_trtu_m per branca) — no crítica — dim: pais, nace ---
+_add("europa_retail_branques_index", "Europa — volum de vendes retail per branca (índex)",
+     "Índex de volum de vendes del comerç al detall per branca (alimentació, no alimentari, "
+     "internet...), ajustat estacional, base 2021=100. Espanya, UE-27, Eurozona, DE, FR, IT, PT.",
+     "Eurostat", "sts_trtu_m", "monthly", "índex (base 2021=100)", False, False,
+     "europa_retail_branques", "index_volum", _periode_monthly_date,
+     dim_cols=["pais", "nace_codi"])
+_add("europa_retail_branques_yoy", "Europa — volum de vendes retail per branca (variació interanual)",
+     "Variació interanual de l'índex de volum de vendes retail per branca.",
+     "Eurostat", "sts_trtu_m", "monthly", "% variació anual", False, False,
+     "europa_retail_branques", "yoy", _periode_monthly_date,
+     dim_cols=["pais", "nace_codi"])
+
 # --- icm_distribucion (INE T=60105 nominal / T=75809 real / T=60115 ocupació) — CRITICAL ---
 for tipus, tid, label in [
     ("nominal", "T=60105", "cifra de negoci nominal"),
@@ -533,6 +546,7 @@ CLAUS = [
     ("europa_vab_vab_total", "dim_1", None),
     ("europa_vab_", "dim_1", "47"),
     ("europa_retail_mensual_", "dim_1", "47"),
+    ("europa_retail_branques_", "dim_1", "dim_2"),
     ("confianza_consumidor_", "pais:ES", None),
     ("targetes_tpv_", "pais:ES", None),          # totes les activitats, no CNAE 47
     ("digitalitzacio_comerc", "dim_2", "47"),

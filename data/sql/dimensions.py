@@ -24,6 +24,10 @@ Codis de branca
   47_ALIM, 47_EQLLAR, 47_EQPERS, 47_SALUT, 47_RESTA
                          agrupacions pròpies de l'ICM (les classes que sumen
                          van a la descripció)
+  47_STS_ALIM, 47_STS_NOALIM
+                         agrupacions pròpies d'Eurostat (sts_trtu_m, codis G47_FOOD i
+                         G47_NFOOD_X_G473): no es pressuposa que coincideixin amb les
+                         de l'ICM (47_ALIM...), per això són codis a part
 
 Si una font canvia una etiqueta, migrate.py falla i diu quina: és volgut.
 Un join que perd files en silenci és pitjor que una migració aturada.
@@ -124,20 +128,24 @@ DIM_TERRITORI, ALIES_TERRITORI = _build_territori()
 _BRANCA = {
     "G": ("Comerç a l'engròs i al detall; reparació de vehicles (secció G)", "seccio", None, []),
     "47": ("Comerç al detall (CNAE 47)", "divisio", "G", [
+        "G47",
         "Comercio al por menor, excepto de vehículos de motor y motocicletas",
         "CNAE 47 total", "Comerç al detall (total CNAE 47)"]),
     "47_SENSE473": ("Comerç al detall sense estacions de servei", "agregat_icm", "47", [
+        "G47_X_G473",
         "Comercio al por menor sin Estaciones de Servicio (47 sin 473)"]),
     "471": ("Establiments no especialitzats (súper i hiper)", "grup", "47", [
         "Comercio al por menor en establecimientos no especializados",
         "Establecimientos no especializados",
         "Establiments no especialitzats (súper i hiper)"]),
     "4711": ("No especialitzats amb predomini d'alimentació", "classe", "471", [
+        "G4711",
         "Comercio al por menor en establecimientos no especializados, con predominio en "
         "productos alimenticios, bebidas y tabaco"]),
     "4719": ("Altres no especialitzats (grans magatzems)", "classe", "471", [
         "Otro comercio al por menor en establecimientos no especializados"]),
     "472": ("Aliments, begudes i tabac (especialitzat)", "grup", "47", [
+        "G472",
         "Comercio al por menor de productos alimenticios, bebidas y tabaco en "
         "establecimientos especializados",
         "Alimentación, bebidas y tabaco",
@@ -172,10 +180,12 @@ _BRANCA = {
         "Comercio al por menor en puestos de venta y en mercadillos",
         "Mercadillos", "Punts de venda i mercadillos"]),
     "479": ("Venda fora d'establiment (internet, correu...)", "grup", "47", [
+        "G479",
         "Comercio al por menor no realizado ni en establecimientos, ni en puestos de "
         "venta ni en mercadillos",
         "Venda no establerta (online)", "Comerç no en establiment (internet)"]),
     "4791": ("Venda per correu o internet", "classe", "479", [
+        "G4791",
         "Comercio al por menor por correspondencia o Internet"]),
     # Agrupacions de l'ICM: no són nodes CNAE, el pare és el 47.
     "47_ALIM": ("Alimentació (4711+472)", "agregat_icm", "47", [
@@ -188,6 +198,10 @@ _BRANCA = {
         "Salud (4773+4774+4775)"]),
     "47_RESTA": ("Resta (4719+474+475+476+477+478+479)", "agregat_icm", "47", [
         "Resto (4719+474+475+476+477+478+479)"]),
+    "47_STS_ALIM": ("Alimentació, begudes i tabac (Eurostat)", "agregat_sts", "47", [
+        "G47_FOOD"]),
+    "47_STS_NOALIM": ("No alimentari sense carburant (Eurostat)", "agregat_sts", "47", [
+        "G47_NFOOD_X_G473"]),
 }
 
 

@@ -316,6 +316,50 @@ def fetch_retail_volume_monthly():
     return df[["pais", "pais_codi", "periode", "index_volum"]].reset_index(drop=True)
 
 
+# Desglossament del G47 a sts_trtu_m: codi NACE d'Eurostat -> etiqueta.
+# G47_FOOD i els G47_NF_* són agregats propis d'Eurostat (no són nodes CNAE);
+# G47_X_G473 és el 47 sense carburant, equivalent al 47 sense 473 de l'ICM.
+# G47_NF_CLTH i G47_NF_HLTH no s'hi inclouen: Espanya deixa de transmetre'ls el 2023-12.
+RETAIL_BRANQUES = {
+    "G47": "Comerç al detall (total)",
+    "G47_X_G473": "Comerç al detall sense carburant",
+    "G47_FOOD": "Alimentació, begudes i tabac",
+    "G47_NFOOD_X_G473": "No alimentari (sense carburant)",
+    "G4711": "No especialitzats amb predomini d'alimentació",
+    "G472": "Alimentació especialitzada",
+    "G479": "Venda fora d'establiment",
+    "G4791": "Venda per correu o internet",
+}
+# Països del desglossament: Espanya, agregats europeus i els quatre grans veïns.
+RETAIL_BRANQUES_PAISOS = ["ES", "EU27_2020", "EA20", "DE", "FR", "IT", "PT"]
+
+
+def fetch_retail_volume_branques():
+    """
+    Dataset sts_trtu_m: volum de vendes mensual del comerç al detall per branca
+    (alimentació, no alimentari, internet...), mateix indicador que
+    fetch_retail_volume_monthly (VOL_SLS, SCA, base 2021=100).
+    """
+    params = [("indic_bt", "VOL_SLS"), ("s_adj", "SCA"), ("unit", "I21")]
+    params += [("nace_r2", c) for c in RETAIL_BRANQUES]
+    params += [("geo", c) for c in RETAIL_BRANQUES_PAISOS]
+
+    data = _fetch_eurostat("sts_trtu_m", params)
+    df = _parse_eurostat_json(data)
+    if df.empty:
+        return df
+
+    df = df.rename(columns={"time": "periode", "TIME_PERIOD": "periode", "geo": "pais_codi"})
+    df["pais"] = df["pais_codi"].map(COUNTRY_NAMES)
+    df["nace_codi"] = df["nace_r2"]
+    df["branca"] = df["nace_codi"].map(RETAIL_BRANQUES)
+    df["index_volum"] = pd.to_numeric(df["valor"], errors="coerce")
+    df = df.dropna(subset=["index_volum"])
+
+    return df[["pais", "pais_codi", "nace_codi", "branca", "periode",
+               "index_volum"]].reset_index(drop=True)
+
+
 # Radiografia de digitalització del comerç (G47), enquesta TIC d'Eurostat.
 # (dataset, indic_is, params_extra, etiqueta_ca, etiqueta_es)
 _DIG_INDICADORS = [

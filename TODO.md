@@ -56,7 +56,7 @@ Pendent:
 
 ### 4. Fonts noves oficials i gratuïtes
 
-Per ordre: afiliació a la Seguretat Social per activitat (verificar fins a quin nivell territorial baixa la divisió 47), Eurostat `sts_trtu_m` amb el desglossament del G47 (alimentació, no alimentació, internet), Central de Balances del Banco de España per sector i mida, Atlas de Distribució de Renda de les Llars (INE), FRONTUR/EGATUR per CCAA, estadística cadastral de superfície comercial per municipi.
+Per ordre: afiliació a la Seguretat Social per activitat (verificar fins a quin nivell territorial baixa la divisió 47), ~~Eurostat `sts_trtu_m` amb el desglossament del G47~~ FET 2026-10-18 (`europa_retail_branques.csv`: G47, 47 sense carburant, alimentació, no alimentari, 4711, 472, 479, 4791; ES, UE-27, EA20, DE, FR, IT, PT; Espanya no transmet tèxtil ni farmàcia des del 2023-12, per això no hi són; pendent: vigilar-ne alguna a `VIGILADES` i una vista a Comparativa Europa), Central de Balances del Banco de España per sector i mida, Atlas de Distribució de Renda de les Llars (INE), FRONTUR/EGATUR per CCAA, estadística cadastral de superfície comercial per municipi.
 
 ### 5. Fonts de pagament o amb llicència (motor intern, no dashboard)
 
