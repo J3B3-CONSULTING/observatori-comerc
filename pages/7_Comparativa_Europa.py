@@ -44,6 +44,7 @@ def _load_csv(name):
 
 df_europa = _load_csv("europa_vab")              # anual: pes CNAE 47/PIB per país
 df_mens = _load_csv("europa_retail_mensual")     # mensual: índex volum vendes
+df_br = _load_csv("europa_retail_branques")      # mensual: índex volum vendes per branca
 df_total = _load_csv("estructura_retail")        # anual: indicadors estructurals bd_size
 df_mida = _load_csv("estructura_retail_mida")    # anual: per mida d'empresa
 df_surv = _load_csv("estructura_retail_supervivencia")  # anual: supervivència Y1/Y2
@@ -1039,6 +1040,51 @@ with tab4:
                 insight(_txt)
                 firma_lectura()
 
+    # ─── Per branca: alimentació, no alimentari, internet ─────────
+    if not df_br.empty:
+        st.markdown("---")
+        st.markdown(
+            "#### " + ("Volum de vendes per branca" if _ca else "Volumen de ventas por rama")
+        )
+        _br_lbl = df_br.drop_duplicates("nace_codi").set_index("nace_codi")["branca"].to_dict()
+        _br_opts = [c for c in ["G47_FOOD", "G47_NFOOD_X_G473", "G4791", "G4711", "G472", "G47_X_G473"]
+                    if c in _br_lbl]
+        _br_sel = st.selectbox(
+            ("Branca" if _ca else "Rama"), _br_opts,
+            format_func=lambda c: _br_lbl.get(c, c), key="cmp_eu_branca",
+        )
+        _dbr = df_br[df_br["nace_codi"] == _br_sel].copy()
+        _dbr["dt"] = pd.to_datetime(_dbr["periode"], format="%Y-%m", errors="coerce")
+        _dbr = _dbr[_dbr["dt"] >= _dbr["dt"].max() - pd.DateOffset(months=120)]
+        fig_br_m = go.Figure()
+        for code, col, w in [("EU27_2020", OCRE_DEEP, 2.4), ("EA20", OCRE, 2.4), ("ES", NAVY, 3.4)]:
+            sub = _dbr[_dbr["pais_codi"] == code].sort_values("dt")
+            if sub.empty:
+                continue
+            fig_br_m.add_trace(go.Scatter(
+                x=sub["dt"], y=sub["index_volum"], mode="lines",
+                name=sub["pais"].iloc[0], line=dict(color=col, width=w),
+            ))
+        fig_br_m.add_hline(y=100, line=dict(color=G2_P, width=1, dash="dot"),
+                           annotation_text="Base 2021=100",
+                           annotation_position="bottom right", annotation_font_size=10)
+        apply_layout(fig_br_m,
+            yaxis_title=("Índex (2021=100)" if _ca else "Índice (2021=100)"), height=380)
+        fig_br_m.update_layout(
+            font=dict(family="Manrope, system-ui, sans-serif", color="#37485a", size=14),
+            paper_bgcolor="white", plot_bgcolor="white",
+            hoverlabel=dict(font=dict(family="Manrope, sans-serif")),
+        )
+        st.plotly_chart(fig_br_m, use_container_width=True, config=_CHART_CONFIG)
+        _ult_br = _dbr["periode"].max()
+        source(
+            f"Eurostat sts_trtu_m. Volum de vendes per branca, ajustat estacional. Darrera dada: {_ult_br}. "
+            "Alimentació i no alimentari són agrupacions pròpies d'Eurostat."
+            if _ca else
+            f"Eurostat sts_trtu_m. Volumen de ventas por rama, ajustado estacional. Último dato: {_ult_br}. "
+            "Alimentación y no alimentario son agrupaciones propias de Eurostat."
+        )
+
 # ─── Descàrrega + nota metodològica al peu ─────────────────────
 
 st.markdown("---")
@@ -1052,6 +1098,13 @@ with st.expander(
             df_europa.to_csv(index=False).encode("utf-8"),
             "europa_vab.csv", "text/csv",
             key="dl_europa_vab",
+        )
+    if not df_br.empty:
+        st.download_button(
+            "europa_retail_branques.csv",
+            df_br.to_csv(index=False).encode("utf-8"),
+            "europa_retail_branques.csv", "text/csv",
+            key="dl_europa_br",
         )
     if not df_mens.empty:
         st.download_button(
