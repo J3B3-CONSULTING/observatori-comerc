@@ -171,6 +171,19 @@ Avui cada pàgina llegeix els CSV directament amb `pd.read_csv`. Crear `data/loa
 
 **Estimació**: mig dia.
 
+**Corpus per al RAG** (afegit 2026-10-19): les dades geogràfiques de la Fase 3 ja porten `geo_codi` i `nota_trencament`. El primer pas tècnic pendent és fer de `data/loader.py` la capa d'accés unificada al corpus (DuckDB + parquet), que servirà d'entrada a la capa RAG. Avui el corpus només es consulta sèrie a sèrie amb `data/sql/query.py`. **Prioritat**: quan es reprengui la Fase 2.
+
+---
+
+## Territori: locals DIRCE (Fase 3, tancada 2026-10-19)
+
+**Origen**: bloc de locals per província (T=301) i per CCAA × grup 471-479 (T=294), fusionat a main el 2026-09-27.
+
+Pendent:
+- **DIRCE en CNAE-2025** (edició prevista el desembre del 2026): afegir l'any de referència de la nova edició (previsiblement 2026) a `TRENCAMENTS_DIRCE` de `data/config.py` i tornar a mapejar els grups 471-479 amb la correspondència oficial CNAE-2025 / NACE Rev. 2.1. **Prioritat alta**: si s'oblida, la matriu de subsectors de la pestanya Territori quedarà desfasada.
+- **Rànquing de variació provincial**: ajustar les etiquetes perquè no es creuin amb la línia de referència d'Espanya entre −1,7% i −2,3%. Prioritat baixa.
+- **Trencament del 2023**: verificar-ne la causa quan l'INE en publiqui la nota metodològica i actualitzar el text de `data/config.py` (ara consta com a "canvi metodològic no verificat"). Prioritat baixa fins que surti la nota.
+
 ---
 
 ## Marges per branca des de l'Encuesta Anual de Comercio (INE)
