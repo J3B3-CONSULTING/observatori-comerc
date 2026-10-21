@@ -34,6 +34,11 @@
     "font": "api_eurostat",
     "missatge": "62 files"
   },
+  "europa_retail_branques": {
+    "estat": "ok",
+    "font": "api_eurostat",
+    "missatge": "18516 files"
+  },
   "europa_retail_mensual": {
     "estat": "ok",
     "font": "api_eurostat",
@@ -42,7 +47,7 @@
   "europa_vab": {
     "estat": "ok",
     "font": "api_eurostat",
-    "missatge": "884 files"
+    "missatge": "891 files"
   },
   "icm": {
     "estat": "ok",

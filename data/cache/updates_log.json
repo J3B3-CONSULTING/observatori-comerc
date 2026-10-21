@@ -107,6 +107,10 @@
   "targetes_tpv": {
    "last_data": "2026-06-30",
    "detected_at": "2026-10-09"
+  },
+  "europa_retail_branques": {
+   "last_data": "2026-08",
+   "detected_at": "2026-10-21"
   }
  },
  "events": [
