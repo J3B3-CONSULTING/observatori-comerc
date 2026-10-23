@@ -181,7 +181,7 @@ Avui cada pàgina llegeix els CSV directament amb `pd.read_csv`. Crear `data/loa
 
 Pendent:
 - **DIRCE en CNAE-2025** (edició prevista el desembre del 2026): afegir l'any de referència de la nova edició (previsiblement 2026) a `TRENCAMENTS_DIRCE` de `data/config.py` i tornar a mapejar els grups 471-479 amb la correspondència oficial CNAE-2025 / NACE Rev. 2.1. **Prioritat alta**: si s'oblida, la matriu de subsectors de la pestanya Territori quedarà desfasada.
-- **Rànquing de variació provincial**: ajustar les etiquetes perquè no es creuin amb la línia de referència d'Espanya entre −1,7% i −2,3%. Prioritat baixa.
+- ~~**Rànquing de variació provincial**: etiquetes creuades amb la línia d'Espanya~~ FET 2026-10-23: les etiquetes són anotacions amb fons blanc i la línia va per sota.
 - **Trencament del 2023**: verificar-ne la causa quan l'INE en publiqui la nota metodològica i actualitzar el text de `data/config.py` (ara consta com a "canvi metodològic no verificat"). Prioritat baixa fins que surti la nota.
 
 ---

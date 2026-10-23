@@ -620,15 +620,21 @@ with tab_prov:
                 fig_rk = go.Figure(go.Bar(
                     y=_r.index, x=_r["_pct"], orientation="h",
                     marker_color=_bar_col,
-                    text=[f"{fpct(p, 1)} ({'+' if a > 0 else '−' if a < 0 else ''}{fnum(abs(a))})"
-                          for p, a in zip(_r["_pct"], _r["_abs"])],
-                    textposition="outside", textfont=dict(size=10, color=G1_P),
                     hovertemplate="<b>%{y}</b><br>%{x:.1f}%<extra></extra>",
                 ))
+                # Etiquetes com a anotacions amb fons blanc: tapen la línia d'Espanya
+                # quan la barra acaba a prop seu, en lloc de quedar-hi travessades.
+                for _prov, p, a in zip(_r.index, _r["_pct"], _r["_abs"]):
+                    fig_rk.add_annotation(
+                        x=p, y=_prov, showarrow=False,
+                        xanchor="right" if p < 0 else "left", xshift=-3 if p < 0 else 3,
+                        text=f"{fpct(p, 1)} ({'+' if a > 0 else '−' if a < 0 else ''}{fnum(abs(a))})",
+                        font=dict(size=10, color=G1_P), bgcolor="#ffffff", borderpad=1)
                 _e_a0 = _lp_esp[_lp_esp["any"] == _a0].iloc[0]["locals_cnae47"]
                 _e_a1 = _lp_esp[_lp_esp["any"] == _a1].iloc[0]["locals_cnae47"]
                 _e_pct = (_e_a1 / _e_a0 - 1) * 100
-                fig_rk.add_vline(x=_e_pct, line_dash="dash", line_color=OCRE, line_width=2)
+                fig_rk.add_vline(x=_e_pct, line_dash="dash", line_color=OCRE, line_width=2,
+                                 layer="below")
                 fig_rk.add_annotation(
                     x=_e_pct, y=1.0, yref="paper", yanchor="bottom", showarrow=False,
                     text=f"{_ESP}: {fpct(_e_pct, 1)}", font=dict(size=11, color=OCRE))
