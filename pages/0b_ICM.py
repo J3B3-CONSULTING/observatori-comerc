@@ -470,13 +470,17 @@ with tab3:
             3, f"El consum real creix a {_n_pos_cc} de {_n_tot_cc} comunitats"
                if _n_tot_cc else "Variació anual per CCAA",
             note="Variació interanual de la cifra de negoci real per comunitat "
-                 "autònoma, últim mes disponible.")
+                 "autònoma, últim mes disponible. Sèrie original, sense corregir "
+                 "d'efectes estacionals i de calendari: no és comparable amb "
+                 "sèries corregides com l'ICD d'Idescat.")
     else:
         exhibit_header(
             3, f"El consumo real crece en {_n_pos_cc} de {_n_tot_cc} comunidades"
                if _n_tot_cc else "Variación anual por CCAA",
             note="Variación interanual de la cifra de negocio real por comunidad "
-                 "autónoma, último mes disponible.")
+                 "autónoma, último mes disponible. Serie original, sin corregir "
+                 "de efectos estacionales y de calendario: no es comparable con "
+                 "series corregidas como el ICD de Idescat.")
 
     if not df_ccaa.empty:
         colors_cc = [NAVY if v >= 0 else RED for v in df_ccaa["valor"]]
@@ -498,9 +502,9 @@ with tab3:
             margin=dict(l=200, r=80, t=30, b=50),
         )
         st.plotly_chart(fig_cc, use_container_width=True)
-        source(f"INE, ICM per CCAA. Cifra de negoci a preus constants ({_branca_font_lbl}) — {format_mes_any(_last_dt, 'ca')}"
+        source(f"INE, ICM per CCAA. Cifra de negoci a preus constants, sèrie original ({_branca_font_lbl}) — {format_mes_any(_last_dt, 'ca')}"
                if _ca else
-               f"INE, ICM por CCAA. Cifra de negocio a precios constantes ({_branca_font_lbl}) — {format_mes_any(_last_dt, 'es')}")
+               f"INE, ICM por CCAA. Cifra de negocio a precios constantes, serie original ({_branca_font_lbl}) — {format_mes_any(_last_dt, 'es')}")
 
 with tab4:
     if _ca:

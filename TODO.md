@@ -80,7 +80,7 @@ Decisió del Jordi. Per ordre: aprofitar a fons SABI si ja hi ha accés; llicèn
 **Causa arrel**: l'INE no publica oficialment una taula CCAA ja desestacionalitzada (60110/60111 només donen la sèrie bruta). Idescat calcula el seu propi ajust regional; no és una taula pública reutilitzable directament via API INE.
 
 **Opcions pendents de decidir**:
-1. Etiquetar la pestanya 3 (mapa CCAA) com "dades sense desestacionalitzar" — fix ràpid, honestedat mínima.
+1. ~~Etiquetar la pestanya 3 (mapa CCAA) com "dades sense desestacionalitzar"~~ FET 2026-10-23: nota de l'exhibit i font diuen "sèrie original", amb l'avís que no és comparable amb l'ICD d'Idescat. Les opcions 2-4 continuen obertes.
 2. Substituir per variació interanual únicament a la UI (pateix menys per calendari que la mensual, tot i no eliminar-lo del tot).
 3. Explorar si Idescat exposa la seva sèrie CVEC via API pública reutilitzable (només Catalunya, no la resta de CCAA — no resoldria el rànquing sencer).
 4. Aplicar un ajust propi (STL/X13 via `statsmodels`) — més feina i risc de introduir un mètode no oficial, a evitar si es pot.
