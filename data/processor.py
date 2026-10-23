@@ -1397,7 +1397,7 @@ def process_marges_branca():
     """
     Marges per branca del comerç minorista (INE, EEE Comercio / Encuesta Anual
     de Comercio, T=76818). marge = EBE / xifra de negoci × 100 per branca CNAE 47
-    a 3 dígits (471-479, excepte 478 que l'INE no publica), sèrie anual des de 2018.
+    a 3 dígits (471-479 excepte 478, vegeu ine.fetch_marges_branca), sèrie anual des de 2018.
 
     Font oficial anual; substitueix l'estimació PATECO. La consumeix el pipeline
     de la newsletter (bloc 3 'marges_branca'). Mateix patró que EAS: si l'API

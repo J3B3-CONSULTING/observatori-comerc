@@ -1089,9 +1089,11 @@ with tab3:
             fig_mb.update_layout(**_layout_mb)
             st.plotly_chart(fig_mb, use_container_width=True, config=_CHART_CONFIG)
             source(("INE, Estadística Estructural d'Empreses Sector Comerç (taula 76818). "
-                    "L'INE no publica la branca 478 (parades i mercats ambulants)") if _ca else
+                    "Sense la branca 478 (parades i mercats ambulants): amb menys d'una persona "
+                    "ocupada per empresa, l'excedent hi inclou la remuneració del titular") if _ca else
                    ("INE, Estadística Estructural de Empresas Sector Comercio (tabla 76818). "
-                    "El INE no publica la rama 478 (puestos y mercadillos)"))
+                    "Sin la rama 478 (puestos y mercadillos): con menos de una persona "
+                    "ocupada por empresa, el excedente incluye la remuneración del titular"))
 
             _mb_d = (_mb_p[_mb_y1] - _mb_p[_mb_y0]).dropna().round(1)
             _n_puja = int((_mb_d > 0).sum())

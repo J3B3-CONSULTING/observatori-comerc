@@ -806,7 +806,7 @@ CNAE_47_API_NAMES = {
     "475": "Comercio al por menor de otros artículos de uso doméstico en establecimientos especializados",
     "476": "Comercio al por menor de artículos culturales y recreativos en establecimientos especializados",
     "477": "Comercio al por menor de otros artículos en establecimientos especializados",
-    "478": "Comercio al por menor en puestos de venta y mercadillos",
+    "478": "Comercio al por menor en puestos de venta y en mercadillos",
     "479": "Comercio al por menor no realizado ni en establecimientos, ni en puestos de venta ni en mercadillos",
     "47":  "Comercio al por menor, excepto de vehículos de motor y motocicletas",
 }
@@ -982,8 +982,9 @@ def fetch_marges_branca(incloure_total=False):
     excedent d'explotació abans d'amortitzacions i resultat financer.
 
     Retorna columnes: any, cnae, branca, marge_vendes_pct.
-    Nota: la branca 478 (mercadillos) no té dada publicada per l'INE (no apareix
-    a la taula), així que queda fora de la sèrie.
+    Nota: la branca 478 (mercadillos) es descarta. L'INE la publica, però té
+    menys d'una persona ocupada per empresa: l'EBE hi inclou la remuneració del
+    titular i el marge (22% el 2024) no és comparable amb la resta de branques.
     """
     data = _fetch_table(76818, nult=10)
     if not isinstance(data, list):
@@ -1006,7 +1007,7 @@ def fetch_marges_branca(incloure_total=False):
         except IndexError:
             continue
         codi = NAME2CODI.get(nom_cnae)
-        if codi is None:
+        if codi is None or codi == "478":
             continue
         for obs in serie.get("Data", []):
             v = obs.get("Valor")

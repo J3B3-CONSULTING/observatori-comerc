@@ -197,7 +197,7 @@ Pendent:
 **Reg automàtic**: FET. `processor.py::process_marges_branca()` (pas 7b de `process_all()`) regenera `data/cache/marges_branca_ine.csv` al workflow diari, mateix patró que EAS (reescriu si l'API torna dades, manté cache si falla). Vigilat a `DATASETS_VIGILATS` (bloc Novetats). El fitxer ha passat de `data/` arrel a `data/cache/`.
 
 **Pendent**:
-- **Branca 478 (mercadillos)**: l'INE no en publica dades a la 76818; queda fora de la sèrie. Buscar si hi ha una altra taula que la cobreixi, o documentar-ho com a límit permanent.
+- ~~**Branca 478 (mercadillos)**~~ RESOLT 2026-10-23: l'INE sí la publica; faltava per un error de nom a `CNAE_47_API_NAMES` ("y en mercadillos"). Ara entra a `subsectors_eas` (pàgina Subsectors). Dels marges es descarta expressament (menys d'una persona ocupada per empresa: l'EBE inclou la remuneració del titular, 22,2% el 2024). Detall a `data/marges_branca_ine.md`.
 - **Definició de marge**: l'INE dona EBE/vendes (gross operating rate); PATECO usa una definició pròpia que dona xifres més altes en algunes branques. Confirmar si per als lliurables interessa replicar la definició de PATECO (marge comercial brut vendes−compres) o mantenir la de l'INE.
 
 ---

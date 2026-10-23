@@ -39,9 +39,13 @@ s'estima.
 ## Cobertura
 
 - **Branques**: 471, 472, 473, 474, 475, 476, 477, 479 (8 de 9).
-- **Falta la 478** (punts de venda i mercadillos): l'INE no en publica EBE ni
-  xifra de negoci a la taula 76818 (probablement per confidencialitat / mostra
-  petita). No és un error del fetcher; és una absència a la font.
+- **478** (punts de venda i mercadillos): l'INE **sí** la publica a la 76818
+  (revisat 2026-10-23; abans es creia que no per un error de mapatge del nom,
+  "en puestos de venta y en mercadillos"). Es descarta expressament: el 2024
+  tenia 40.009 empreses i 37.706 persones ocupades, menys d'una per empresa.
+  L'EBE hi inclou la remuneració del titular i el marge (22,2% el 2024, el
+  doble de la branca següent) no és comparable amb la resta. Les altres
+  magnituds de la 478 sí que són a `subsectors_eas.csv`.
 - **Anys**: 2018–2024.
 
 ### Esquema
@@ -79,5 +83,5 @@ El mapeig conceptual amb les branques que PATECO anomena N470–N479:
 | N475 Equipament de la llar | 475 Equipament de la llar |
 | N476 Cultural/esportiu | 476 Articles culturals i recreatius |
 | N477 Moda/calçat | 477 Altres articles |
-| N478 Mercadillos | 478 (no disponible a l'INE) |
+| N478 Mercadillos | 478 (descartada: EBE amb remuneració del titular) |
 | N479 Internet | 479 Comerç no en establiment |
