@@ -50,6 +50,7 @@ Pendents de la llista:
 Sèries vigilades (extrem, ratxa, inflexió): `VIGILADES` a `fets.py`. Per afegir-ne una, una línia amb filtres i etiqueta.
 
 Pendent:
+- ~~Enunciats en castellà~~ FET 2026-10-23: columna `enunciat_es` (mateixa regla, mateixes xifres), avisos amb `text_es`, noms es a `dimensions.NOMS_ES_*`, `get_facts(idioma="es")`; `fets.csv` porta `enunciat_es` i `avisos_text_es`. Pendent: que `fets_setmana.py` (newsletter, que s'escriu en castellà) faci servir `enunciat_es`.
 - Els fets serveixen per a la sessió d'edició del Pulso (`fets_setmana.md`, ja connectat) i per al xatbot; a les candidates a predicció, pendent. **A la portada, no** (decidit 2026-10-23 després d'una maqueta, commit 52a8871, revertit): repetia la tesi i Novetats, canviava poc amb dades mensuals i els enunciats de màquina no s'entenen sense context.
 - ~~Rànquing de creixement anual amb massa salts~~ FET 2026-10-23: salt mínim de 5 llocs per a `der_icm_real_var_anual` (de 10 fets a 6) i rellevància 0,25 per a qui encapçala o tanca igual que l'any anterior (10 de 12). Fets totals: de 82 a 78. La resta de llindars, revisar-los quan hi hagi un parell de mesos més de fets.
 - Regla de divergència CDMGE contra ICM, quan s'aclareixi què mesura cada indicador del CDMGE (taula del pas 2).

@@ -447,13 +447,16 @@ _FET_COLS = ["fet_id", "regla", "enunciat", "valor", "unitat", "comparacio",
              "rellevancia"]
 
 
-def get_facts(regla=None, geo_codi=None, cnae_codi=None, serie_id=None, limit=20):
+def get_facts(regla=None, geo_codi=None, cnae_codi=None, serie_id=None, limit=20,
+              idioma="ca"):
     """Fets ja redactats pel motor, ordenats per rellevància. Cada fet porta les
     sèries d'on surt (amb nom i font) i el text dels avisos de qualitat: el model
     els ha de citar tal com venen, sense recalcular-los.
     Filtres: regla (extrem, ratxa, inflexio, ranking, divergencia,
     quadrant_branca, saturacio), geo_codi ('ccaa:09'), cnae_codi ('477'),
-    serie_id (fets que fan servir aquesta sèrie)."""
+    serie_id (fets que fan servir aquesta sèrie).
+    idioma: 'ca' o 'es' (enunciat i avisos en castellà)."""
+    es = idioma == "es"
     con = _connect()
     try:
         clauses, params = [], []
@@ -471,12 +474,14 @@ def get_facts(regla=None, geo_codi=None, cnae_codi=None, serie_id=None, limit=20
                 "SELECT DISTINCT regla FROM fets ORDER BY 1").fetchall()]
             return {"error": "cap fet amb aquests filtres", "regles_disponibles": regles,
                     "facts": [], "total_available": 0}
+        cols = ["enunciat_es AS enunciat" if es and c == "enunciat" else c for c in _FET_COLS]
         rows = con.execute(f"""
-            SELECT {", ".join(_FET_COLS)} FROM fets {where}
+            SELECT {", ".join(cols)} FROM fets {where}
             ORDER BY rellevancia DESC, data DESC, fet_id LIMIT ?
         """, params + [limit]).fetchall()
 
-        textos_avis = dict(con.execute("SELECT avis_codi, text FROM dim_avis").fetchall())
+        textos_avis = dict(con.execute(
+            f"SELECT avis_codi, {'text_es' if es else 'text'} FROM dim_avis").fetchall())
         fonts = {r[0]: {"serie_id": r[0], "name": r[1], "source": r[2]} for r in con.execute(
             "SELECT serie_id, name, source FROM series_metadata").fetchall()}
         facts = []

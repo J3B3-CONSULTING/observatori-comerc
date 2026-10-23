@@ -631,7 +631,8 @@ def _carrega_dimensions(con):
     con.execute("DELETE FROM dim_branca")
     con.execute("DELETE FROM dim_avis")
     con.register("da", pd.DataFrame(DIM_AVIS))
-    con.execute("INSERT INTO dim_avis SELECT avis_codi, text FROM da")
+    con.execute("INSERT INTO dim_avis (avis_codi, text, text_es) "
+                "SELECT avis_codi, text, text_es FROM da")
     con.unregister("da")
     con.register("dt", pd.DataFrame(DIM_TERRITORI))
     con.execute("INSERT INTO dim_territori SELECT geo_codi, nivell, nom, geo_pare, "
@@ -701,10 +702,11 @@ def _exporta_fets(fets):
     """Còpia dels fets en CSV versionat, per als consumidors sense DuckDB (el
     snapshot del newsletter clona el repo i llegeix data/cache). Ordre i
     arrodoniment fixos: el diff entre dies només mostra fets que canvien."""
-    textos = {a["avis_codi"]: a["text"] for a in DIM_AVIS}
     df = fets.copy()
-    df["avisos_text"] = df["avis"].map(
-        lambda v: " | ".join(textos[c] for c in v.split(",")) if isinstance(v, str) and v else None)
+    for col, camp in (("avisos_text", "text"), ("avisos_text_es", "text_es")):
+        textos = {a["avis_codi"]: a[camp] for a in DIM_AVIS}
+        df[col] = df["avis"].map(
+            lambda v: " | ".join(textos[c] for c in v.split(",")) if isinstance(v, str) and v else None)
     for c in ("valor", "valor_referencia", "rellevancia"):
         df[c] = df[c].astype(float).round(4)
     df.sort_values("fet_id").to_csv(FETS_CSV, index=False)
@@ -758,7 +760,7 @@ def migrate(db_path=DB_PATH, series=None):
     _comprova_avis("fets", fets["avis"])
     con.execute("DELETE FROM fets")
     con.register("fets_df", fets)
-    con.execute("INSERT INTO fets SELECT * FROM fets_df")
+    con.execute(f"INSERT INTO fets ({', '.join(fets.columns)}) SELECT * FROM fets_df")
     con.unregister("fets_df")
     _exporta_fets(fets)
     print(f"    {len(fets)} fets ({', '.join(f'{k}: {v}' for k, v in fets['regla'].value_counts().items())})")

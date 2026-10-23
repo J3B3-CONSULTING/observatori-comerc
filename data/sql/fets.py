@@ -3,9 +3,10 @@ Motor de fets: lectures deterministes sobre les sèries i els derivats.
 
 Cada regla llegeix DuckDB per les claus comunes (geo_codi, cnae_codi) i escriu
 fets amb l'enunciat ja redactat, el valor, la referència amb què es compara,
-les sèries d'origen i els avisos de qualitat heretats. El xatbot, la portada, la
-newsletter i les candidates a predicció llegeixen la taula `fets`; cap d'ells
-torna a calcular res.
+les sèries d'origen i els avisos de qualitat heretats. L'enunciat surt en català
+(enunciat) i en castellà (enunciat_es), redactats per la mateixa regla amb les
+mateixes xifres. El xatbot, la newsletter i les candidates a predicció llegeixen
+la taula `fets`; cap d'ells torna a calcular res.
 
 Regles:
   extrem           el darrer valor és el més alt o el més baix des de fa N anys
@@ -23,17 +24,35 @@ import re
 
 import pandas as pd
 
+from data.sql.dimensions import NOMS_ES_BRANCA, NOMS_ES_TERRITORI
+
 _COLS = ["fet_id", "regla", "enunciat", "valor", "unitat", "comparacio",
          "valor_referencia", "data", "series", "geo_codi", "cnae_codi", "avis",
-         "rellevancia"]
+         "rellevancia", "enunciat_es"]
+_LANGS = ("ca", "es")
 
 # Ceuta i Melilla queden fora dels rànquings i de la saturació: amb 80.000
 # habitants qualsevol ràtio per càpita surt als extrems i no diu res del comerç.
 _FORA_RANKING = {"ccaa:18", "ccaa:19"}
 
-_MESOS = ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost",
-          "setembre", "octubre", "novembre", "desembre"]
-_ORDINALS = {1: "1r", 2: "2n", 3: "3r", 4: "4t"}
+_MESOS = {
+    "ca": ["gener", "febrer", "març", "abril", "maig", "juny", "juliol", "agost",
+           "setembre", "octubre", "novembre", "desembre"],
+    "es": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+           "septiembre", "octubre", "noviembre", "diciembre"],
+}
+_ORDINALS = {"ca": {1: "1r", 2: "2n", 3: "3r", 4: "4t"},
+             "es": {1: "1.er", 2: "2.º", 3: "3.er", 4: "4.º"}}
+# Unitats: la clau és la catalana, que és la que es desa a la columna unitat.
+_UNITATS_ES = {"euros de 2021": "euros de 2021", "persones": "personas",
+               "empreses per 1.000 hab.": "empresas por 1.000 hab.", "punts": "puntos",
+               "milers de persones": "miles de personas",
+               "locals per 1.000 hab.": "locales por 1.000 hab."}
+# Grups de l'IPC (dim_1 del deflactor), que arriben en català.
+_DIM1_ES = {"Parament de la llar": "muebles y artículos del hogar",
+            "Alimentació i begudes no alcohòliques": "alimentos y bebidas no alcohólicas",
+            "Vestit i calçat": "vestido y calzado", "Índex general": "índice general"}
+_SIGNE = {"ca": {1: "positiu", -1: "negatiu"}, "es": {1: "positivo", -1: "negativo"}}
 _PER_ANY = {"monthly": 12, "quarterly": 4, "annual": 1}
 
 
@@ -48,38 +67,63 @@ def _num(v, signe=False):
     return f"+{txt}" if signe and v > 0 else txt
 
 
-def _valor(v, fmt, unitat=""):
+def _u(unitat, lang):
+    return _UNITATS_ES.get(unitat, unitat) if lang == "es" else unitat
+
+
+def _valor(v, fmt, unitat="", lang="ca"):
     if fmt == "pct":
         return f"{_num(v, signe=True)}%"
-    return f"{_num(v)} {unitat}".strip()
+    return f"{_num(v)} {_u(unitat, lang)}".strip()
 
 
-def _periode(d, freq):
+def _periode(d, freq, lang="ca"):
     d = pd.Timestamp(d)
+    de = "del" if lang == "ca" else "de"
     if freq == "monthly":
-        return f"{_MESOS[d.month - 1]} del {d.year}"
+        return f"{_MESOS[lang][d.month - 1]} {de} {d.year}"
     if freq == "quarterly":
-        return f"{_ORDINALS[d.quarter]} trimestre del {d.year}"
+        return f"{_ORDINALS[lang][d.quarter]} trimestre {de} {d.year}"
     return str(d.year)
 
 
-def _amb(prep, d, freq):
-    """Període amb article i preposició contreta: 'a l'agost del 2026', 'des del 2024'."""
-    txt = _periode(d, freq)
+_PREP_ES = {"a": "en", "des de": "desde", "fins a": "hasta"}
+
+
+def _amb(prep, d, freq, lang="ca"):
+    """Període amb preposició: 'a l'agost del 2026', 'des del 2024' / 'en agosto de
+    2026', 'desde 2024', 'hasta el 2.º trimestre de 2026'. prep és la catalana."""
+    txt = _periode(d, freq, lang)
+    if lang == "es":
+        return f"{_PREP_ES[prep]} {'el ' if freq == 'quarterly' else ''}{txt}"
     if freq == "monthly" and txt[0] in "aeiou":
         return f"{prep} l'{txt}"
     # a + el = al, de + el = del; 'fins a' i 'des de' acaben igual
     return f"{prep}l {txt}"
 
 
-def _de(txt):
+def _de(txt, lang="ca"):
+    if lang == "es":
+        return f"de {txt}"
     return f"d'{txt}" if txt[0] in "aeiouàèéíòóú" else f"de {txt}"
 
 
-def _periodes(n, freq):
-    unitat = {"monthly": ("mes", "mesos"), "quarterly": ("trimestre", "trimestres"),
-              "annual": ("any", "anys")}[freq]
+def _periodes(n, freq, lang="ca"):
+    unitat = {"ca": {"monthly": ("mes", "mesos"), "quarterly": ("trimestre", "trimestres"),
+                     "annual": ("any", "anys")},
+              "es": {"monthly": ("mes", "meses"), "quarterly": ("trimestre", "trimestres"),
+                     "annual": ("año", "años")}}[lang][freq]
     return f"{n} {unitat[0] if n == 1 else unitat[1]}"
+
+
+def _seguits(n, freq, signe, lang):
+    """'8 mesos seguits en positiu' / '8 meses seguidos en positivo'."""
+    s = "seguits" if lang == "ca" else "seguidos"
+    return f"{_periodes(n, freq, lang)} {s} en {_SIGNE[lang][signe]}"
+
+
+def _cap(txt):
+    return txt[0].upper() + txt[1:]
 
 
 # ─── Lectura ─────────────────────────────────────────────────────────────────
@@ -110,18 +154,27 @@ def _fet(**kw):
 
 
 class _Noms:
-    """Noms en català de territoris i branques (dim_territori, dim_branca)."""
+    """Noms de territoris i branques: en català de dim_territori i dim_branca, en
+    castellà de dimensions.NOMS_ES_* (si no hi són, el català)."""
 
     def __init__(self, con):
         self.geo = dict(con.execute("SELECT geo_codi, nom FROM dim_territori").fetchall())
         self.cnae = dict(con.execute("SELECT cnae_codi, nom FROM dim_branca").fetchall())
         self.freq = dict(con.execute("SELECT serie_id, frequency FROM series_metadata").fetchall())
 
-    def branca(self, codi):
+    def territori(self, codi, lang="ca"):
+        nom = self.geo.get(codi, codi)
+        return NOMS_ES_TERRITORI.get(codi, nom) if lang == "es" else nom
+
+    def nom_branca(self, codi, lang="ca"):
+        nom = self.cnae.get(codi, codi)
+        return NOMS_ES_BRANCA.get(codi, nom) if lang == "es" else nom
+
+    def branca(self, codi, lang="ca"):
         if codi in ("47", None):
-            return "comerç al detall"
+            return "comerç al detall" if lang == "ca" else "comercio minorista"
         # Fora la composició de les agrupacions de l'ICM: "Alimentació (4711+472)".
-        nom = re.sub(r" \([\d+]+\)$", "", self.cnae.get(codi, codi))
+        nom = re.sub(r" \([\d+]+\)$", "", self.nom_branca(codi, lang))
         return nom[0].lower() + nom[1:]
 
 
@@ -134,34 +187,44 @@ _BRANQUES_ICM = ["47", "47_SENSE473", "47_ALIM", "47_EQPERS", "47_EQLLAR", "47_S
 VIGILADES = [
     dict(serie_id="icm_real", filtres=dict(geo_codi="pais:ES", dim_3="var_anual"),
          cnae=_BRANQUES_ICM, tipus="variacio", fmt="pct",
-         etiqueta="vendes reals ({branca}), variació interanual"),
+         etiqueta="vendes reals ({branca}), variació interanual",
+         etiqueta_es="ventas reales ({branca}), variación interanual"),
     dict(serie_id="icm_real", filtres=dict(dim_3="var_anual", cnae_codi="47"),
          nivell_geo="ccaa", tipus="variacio", fmt="pct",
-         etiqueta="vendes reals del comerç al detall ({territori}), variació interanual"),
+         etiqueta="vendes reals del comerç al detall ({territori}), variació interanual",
+         etiqueta_es="ventas reales del comercio minorista ({territori}), variación interanual"),
     dict(serie_id="icm_ocupacio", filtres=dict(geo_codi="pais:ES", dim_3="var_anual",
                                                cnae_codi="47"),
          tipus="variacio", fmt="pct",
-         etiqueta="ocupació del comerç al detall (ICM), variació interanual"),
+         etiqueta="ocupació del comerç al detall (ICM), variació interanual",
+         etiqueta_es="empleo del comercio minorista (ICM), variación interanual"),
     dict(serie_id="der_icm_productivitat_var_anual",
          filtres=dict(geo_codi="pais:ES", cnae_codi="47"), tipus="variacio", fmt="pct",
-         etiqueta="vendes reals per persona ocupada, variació interanual"),
+         etiqueta="vendes reals per persona ocupada, variació interanual",
+         etiqueta_es="ventas reales por persona ocupada, variación interanual"),
     # Eurostat (CVEC, base 2021): alimentació contra no alimentari; l'internet ja el porta l'ICM.
     dict(serie_id="europa_retail_branques_yoy", filtres=dict(geo_codi="pais:ES"),
          cnae=["47_STS_ALIM", "47_STS_NOALIM"], tipus="variacio", fmt="pct",
-         etiqueta="volum de vendes, {branca}, variació interanual"),
+         etiqueta="volum de vendes, {branca}, variació interanual",
+         etiqueta_es="volumen de ventas, {branca}, variación interanual"),
     dict(serie_id="targetes_tpv_var_import", filtres={}, tipus="variacio", fmt="pct",
-         etiqueta="import pagat amb targeta en TPV, variació interanual"),
+         etiqueta="import pagat amb targeta en TPV, variació interanual",
+         etiqueta_es="importe pagado con tarjeta en TPV, variación interanual"),
     dict(serie_id="der_tpv_menys_icm", filtres={}, tipus="variacio", fmt="pct",
-         etiqueta="diferència entre la targeta i les vendes nominals del comerç"),
+         etiqueta="diferència entre la targeta i les vendes nominals del comerç",
+         etiqueta_es="diferencia entre la tarjeta y las ventas nominales del comercio"),
     dict(serie_id="der_icm_deflactor_vs_ipc", filtres=dict(geo_codi="pais:ES"),
          per_dim_1=True, tipus="variacio", fmt="pct",
-         etiqueta="preus de venda del comerç contra l'IPC ({dim_1})"),
+         etiqueta="preus de venda del comerç contra l'IPC ({dim_1})",
+         etiqueta_es="precios de venta del comercio frente al IPC ({dim_1})"),
     dict(serie_id="confianza_consumidor_index_confianca", filtres={}, tipus="nivell",
          fmt="nivell", unitat="punts",
-         etiqueta="indicador de confiança del consumidor"),
+         etiqueta="indicador de confiança del consumidor",
+         etiqueta_es="indicador de confianza del consumidor"),
     dict(serie_id="epa_retail_ocupats", filtres=dict(dim_1="total"), tipus="nivell",
          fmt="nivell", unitat="milers de persones",
-         etiqueta="persones ocupades al comerç al detall (EPA)"),
+         etiqueta="persones ocupades al comerç al detall (EPA)",
+         etiqueta_es="personas ocupadas en el comercio minorista (EPA)"),
 ]
 
 # Un extrem només és fet si la darrera vegada que es va superar fa com a mínim
@@ -184,10 +247,14 @@ def _grups_vigilats(con, noms, v):
         g = g.sort_values("date").reset_index(drop=True)
         clau = tuple(None if pd.isna(c) else c for c in clau)
         geo, cnae = clau[0], clau[1]
-        etiqueta = v["etiqueta"].format(branca=noms.branca(cnae),
-                                        territori=noms.geo.get(geo, geo),
-                                        dim_1=(clau[2].lower() if len(clau) > 2 else ""))
-        yield geo, cnae, (clau[2] if len(clau) > 2 else None), etiqueta, g
+        dim_1 = clau[2] if len(clau) > 2 else None
+        etiquetes = {}
+        for lang in _LANGS:
+            d1 = (_DIM1_ES.get(dim_1, dim_1) if lang == "es" else dim_1) or ""
+            etiquetes[lang] = v["etiqueta" if lang == "ca" else "etiqueta_es"].format(
+                branca=noms.branca(cnae, lang), territori=noms.territori(geo, lang),
+                dim_1=d1.lower())
+        yield geo, cnae, dim_1, etiquetes, g
 
 
 def _extrem(g, freq):
@@ -226,33 +293,43 @@ def _regles_vigilades(con, noms):
     fets = []
     for v in VIGILADES:
         freq = noms.freq[v["serie_id"]]
-        for geo, cnae, dim_1, etiqueta, g in _grups_vigilats(con, noms, v):
+        for geo, cnae, dim_1, etiquetes, g in _grups_vigilats(con, noms, v):
             if len(g) < 3:
                 continue
             d = g["date"].iloc[-1]
             x = g["value"].iloc[-1]
-            val = _valor(x, v["fmt"], v.get("unitat", ""))
+            unitat = v.get("unitat", "")
+            val = {lang: _valor(x, v["fmt"], unitat, lang) for lang in _LANGS}
             base = dict(series=[v["serie_id"]], geo_codi=geo, cnae_codi=cnae, data=d,
                         valor=x, unitat=v.get("unitat") or "%")
             clau = f"{v['serie_id']}:{geo}:{cnae or ''}:{dim_1 or ''}"
-            cap = etiqueta[0].upper() + etiqueta[1:]
+            cap = {lang: _cap(etiquetes[lang]) for lang in _LANGS}
 
             ext = _extrem(g, freq)
             if ext:
                 sentit, ref, n = ext
-                adj = "més alt" if sentit == "max" else "més baix"
+                adj = {"ca": "més alt" if sentit == "max" else "més baix",
+                       "es": "más alto" if sentit == "max" else "más bajo"}
+                enun = {}
                 if ref is None:
-                    comp = f"tota la sèrie, que comença {_amb('a', g['date'].iloc[0], freq)}"
-                    enun = f"{cap}: {val} {_amb('a', d, freq)}, el valor {adj} de {comp}."
+                    inici = g["date"].iloc[0]
+                    comp = f"tota la sèrie, que comença {_amb('a', inici, freq)}"
+                    comp_es = f"toda la serie, que empieza {_amb('a', inici, freq, 'es')}"
+                    for lang, c in (("ca", comp), ("es", comp_es)):
+                        enun[lang] = (f"{cap[lang]}: {val[lang]} {_amb('a', d, freq, lang)}, "
+                                      f"el valor {adj[lang]} de {c}.")
                     vref = None
                 else:
                     comp = _amb("des de", ref, freq)
                     vref = float(g.loc[g["date"] == ref, "value"].iloc[0])
-                    enun = (f"{cap}: {val} {_amb('a', d, freq)}, el valor {adj} {comp} "
-                            f"({_valor(vref, v['fmt'], v.get('unitat', ''))}).")
+                    for lang in _LANGS:
+                        enun[lang] = (f"{cap[lang]}: {val[lang]} {_amb('a', d, freq, lang)}, "
+                                      f"el valor {adj[lang]} {_amb('des de', ref, freq, lang)} "
+                                      f"({_valor(vref, v['fmt'], unitat, lang)}).")
                 finestra = g.iloc[-(n + 2):] if ref is not None else g
                 fets.append(_fet(fet_id=f"extrem_{sentit}:{clau}", regla="extrem",
-                                 enunciat=enun, comparacio=comp, valor_referencia=vref,
+                                 enunciat=enun["ca"], enunciat_es=enun["es"],
+                                 comparacio=comp, valor_referencia=vref,
                                  avis=_uneix_avis(finestra["avis"]),
                                  rellevancia=min(n / _PER_ANY[freq], 10), **base))
 
@@ -260,26 +337,33 @@ def _regles_vigilades(con, noms):
                 continue
             valors = g["value"].tolist()
             n = _ratxa(valors)
-            signe_txt = "positiu" if valors[-1] > 0 else "negatiu"
+            signe = 1 if valors[-1] > 0 else -1
             if n == 1:
                 n_prev = _ratxa(valors[:-1])
                 if (n_prev >= _MIN_RATXA_PREVIA[freq] and _signe(valors[-2]) == -_signe(x)
                         and abs(x) >= _MIN_INFLEXIO):
-                    previ = "positiu" if valors[-2] > 0 else "negatiu"
-                    comp = f"{_periodes(n_prev, freq)} seguits en {previ}"
+                    previ = 1 if valors[-2] > 0 else -1
+                    despres = {"ca": "després de", "es": "tras"}
+                    passa = {"ca": "passa a", "es": "pasa a"}
+                    enun = {lang: (f"{cap[lang]}: {passa[lang]} {_SIGNE[lang][signe]} "
+                                   f"{_amb('a', d, freq, lang)} ({val[lang]}) {despres[lang]} "
+                                   f"{_seguits(n_prev, freq, previ, lang)}.")
+                            for lang in _LANGS}
                     fets.append(_fet(
                         fet_id=f"inflexio:{clau}", regla="inflexio",
-                        enunciat=(f"{cap}: passa a {signe_txt} {_amb('a', d, freq)} ({val}) "
-                                  f"després de {comp}."),
-                        comparacio=comp, valor_referencia=float(valors[-2]),
+                        enunciat=enun["ca"], enunciat_es=enun["es"],
+                        comparacio=_seguits(n_prev, freq, previ, "ca"),
+                        valor_referencia=float(valors[-2]),
                         avis=_uneix_avis(g["avis"].iloc[-(n_prev + 1):]),
                         rellevancia=min(n_prev / _PER_ANY[freq] * 2, 10), **base))
             elif n >= _MIN_RATXA[freq]:
-                comp = f"{_periodes(n, freq)} seguits en {signe_txt}"
+                enun = {lang: (f"{cap[lang]}: {_seguits(n, freq, signe, lang)}, "
+                               f"{_amb('fins a', d, freq, lang)} ({val[lang]}).")
+                        for lang in _LANGS}
                 fets.append(_fet(
                     fet_id=f"ratxa:{clau}", regla="ratxa",
-                    enunciat=f"{cap}: {comp}, {_amb('fins a', d, freq)} ({val}).",
-                    comparacio=comp, valor_referencia=None,
+                    enunciat=enun["ca"], enunciat_es=enun["es"],
+                    comparacio=_seguits(n, freq, signe, "ca"), valor_referencia=None,
                     avis=_uneix_avis(g["avis"].iloc[-n:]),
                     rellevancia=min(n / _PER_ANY[freq], 10), **base))
     return fets
@@ -289,19 +373,25 @@ def _regles_vigilades(con, noms):
 
 RANKINGS = [
     dict(serie_id="der_vendes_per_habitant_real", unitat="euros de 2021",
-         etiqueta="vendes del comerç al detall per habitant"),
+         etiqueta="vendes del comerç al detall per habitant",
+         etiqueta_es="ventas del comercio minorista por habitante"),
     dict(serie_id="der_vendes_per_local_real", unitat="euros de 2021",
-         etiqueta="vendes per local"),
+         etiqueta="vendes per local",
+         etiqueta_es="ventas por local"),
     dict(serie_id="der_vendes_per_ocupat_real", unitat="euros de 2021",
-         etiqueta="vendes per persona ocupada"),
+         etiqueta="vendes per persona ocupada",
+         etiqueta_es="ventas por persona ocupada"),
     dict(serie_id="der_ocupats_per_local", unitat="persones",
-         etiqueta="persones ocupades per local"),
+         etiqueta="persones ocupades per local",
+         etiqueta_es="personas ocupadas por local"),
     dict(serie_id="empreses_per_1000hab", unitat="empreses per 1.000 hab.",
-         etiqueta="empreses de comerç al detall per 1.000 habitants"),
+         etiqueta="empreses de comerç al detall per 1.000 habitants",
+         etiqueta_es="empresas de comercio minorista por 1.000 habitantes"),
     # Una variació anual canvia molt de posició d'un any a l'altre: pesa la meitat
     # i demana un salt més gran (les CCAA s'apilen a poques dècimes).
     dict(serie_id="der_icm_real_var_anual", fmt="pct", unitat="%", pes=0.5,
-         min_salt=5, etiqueta="creixement de les vendes reals"),
+         min_salt=5, etiqueta="creixement de les vendes reals",
+         etiqueta_es="crecimiento de las ventas reales"),
 ]
 _MIN_SALT = 3
 # Qui encapçala o tanca igual que l'any anterior no és notícia: queda al fons.
@@ -330,31 +420,43 @@ def _regla_ranking(con, noms):
                 continue
             p0, v0, av0 = pos[d0][geo]
             avis = _uneix_avis([av0, av1])
-            nom = noms.geo[geo]
             base = dict(series=[r["serie_id"]], geo_codi=geo, cnae_codi="47", data=d1,
                         valor=v1, unitat=r["unitat"], avis=avis)
+            nom = {lang: noms.territori(geo, lang) for lang in _LANGS}
+            etq = {"ca": r["etiqueta"], "es": r["etiqueta_es"]}
+            val = {lang: _valor(v1, fmt, r["unitat"], lang) for lang in _LANGS}
             if abs(p1 - p0) >= r.get("min_salt", _MIN_SALT):
-                verb = "puja" if p1 < p0 else "baixa"
-                comp = f"posició {p0} el {a0}"
+                puja = p1 < p0
+                enun = {
+                    "ca": (f"{nom['ca']} {'puja' if puja else 'baixa'} de la posició {p0} a "
+                           f"la {p1} de {n_ccaa} comunitats en {etq['ca']} entre el {a0} i "
+                           f"el {a1} ({val['ca']})."),
+                    "es": (f"{nom['es']} {'sube' if puja else 'baja'} del puesto {p0} al "
+                           f"{p1} de {n_ccaa} comunidades en {etq['es']} entre {a0} y {a1} "
+                           f"({val['es']})."),
+                }
                 fets.append(_fet(
                     fet_id=f"ranking:{r['serie_id']}:{geo}", regla="ranking",
-                    enunciat=(f"{nom} {verb} de la posició {p0} a la {p1} de {n_ccaa} "
-                              f"comunitats en {r['etiqueta']} entre el {a0} i el {a1} "
-                              f"({_valor(v1, fmt, r['unitat'])})."),
-                    comparacio=comp, valor_referencia=float(p0),
+                    enunciat=enun["ca"], enunciat_es=enun["es"],
+                    comparacio=f"posició {p0} el {a0}", valor_referencia=float(p0),
                     rellevancia=abs(p1 - p0) / 2 * r.get("pes", 1), **base))
             if p1 in (1, n_ccaa):
-                lloc = "encapçala" if p1 == 1 else "tanca"
                 vesp = esp["value"].get(d1)
-                comp = (f"Espanya: {_valor(vesp, fmt, r['unitat'])}" if vesp is not None
-                        else None)
+                comp = {lang: (f"{noms.territori('pais:ES', lang)}: "
+                               f"{_valor(vesp, fmt, r['unitat'], lang)}"
+                               if vesp is not None else None) for lang in _LANGS}
+                lloc = {"ca": "encapçala" if p1 == 1 else "tanca",
+                        "es": "encabeza" if p1 == 1 else "cierra"}
+                enun = {
+                    "ca": f"{nom['ca']} {lloc['ca']} el rànquing {_de(etq['ca'])} el {a1}: ",
+                    "es": f"{nom['es']} {lloc['es']} el ranking {_de(etq['es'], 'es')} en {a1}: ",
+                }
+                enun = {lang: enun[lang] + val[lang]
+                        + (f" ({comp[lang]})." if comp[lang] else ".") for lang in _LANGS}
                 fets.append(_fet(
                     fet_id=f"ranking_{'cap' if p1 == 1 else 'cua'}:{r['serie_id']}",
-                    regla="ranking",
-                    enunciat=(f"{nom} {lloc} el rànquing {_de(r['etiqueta'])} el {a1}: "
-                              f"{_valor(v1, fmt, r['unitat'])}"
-                              + (f" ({comp})." if comp else ".")),
-                    comparacio=comp, valor_referencia=vesp,
+                    regla="ranking", enunciat=enun["ca"], enunciat_es=enun["es"],
+                    comparacio=comp["ca"], valor_referencia=vesp,
                     rellevancia=_RELL_CAP_CUA_REPETIT if p0 == p1 else 1.0, **base))
     return fets
 
@@ -364,11 +466,15 @@ def _regla_ranking(con, noms):
 DIVERGENCIES = [
     dict(serie_id="der_tpv_menys_icm", llindar=5.0, filtres={},
          positiu="l'import pagat amb targeta creix {v} més que les vendes nominals del comerç",
-         negatiu="l'import pagat amb targeta creix {v} menys que les vendes nominals del comerç"),
+         negatiu="l'import pagat amb targeta creix {v} menys que les vendes nominals del comerç",
+         positiu_es="el importe pagado con tarjeta crece {v} más que las ventas nominales del comercio",
+         negatiu_es="el importe pagado con tarjeta crece {v} menos que las ventas nominales del comercio"),
     dict(serie_id="der_icm_deflactor_vs_ipc", llindar=2.0, filtres=dict(geo_codi="pais:ES"),
          per_dim_1=True,
          positiu="els preus del que ven el comerç ({dim_1}) pugen {v} més que l'IPC del grup",
-         negatiu="els preus del que ven el comerç ({dim_1}) pugen {v} menys que l'IPC del grup"),
+         negatiu="els preus del que ven el comerç ({dim_1}) pugen {v} menys que l'IPC del grup",
+         positiu_es="los precios de lo que vende el comercio ({dim_1}) suben {v} más que el IPC del grupo",
+         negatiu_es="los precios de lo que vende el comercio ({dim_1}) suben {v} menos que el IPC del grupo"),
 ]
 
 
@@ -384,12 +490,17 @@ def _regla_divergencia(con, noms):
             if abs(x) < dv["llindar"]:
                 continue
             dim_1 = clau[0] if dv.get("per_dim_1") else ""
-            txt = dv["positiu" if x > 0 else "negatiu"].format(
-                v=f"{_num(abs(x))}%", dim_1=(dim_1 or "").lower())
+            clau_txt = "positiu" if x > 0 else "negatiu"
+            enun = {}
+            for lang in _LANGS:
+                d1 = (_DIM1_ES.get(dim_1, dim_1) if lang == "es" else dim_1) or ""
+                txt = dv[clau_txt if lang == "ca" else f"{clau_txt}_es"].format(
+                    v=f"{_num(abs(x))}%", dim_1=d1.lower())
+                enun[lang] = f"{_periode(darrer['date'], freq, lang).capitalize()}: {txt}."
             comp = f"llindar de {_num(dv['llindar'])}%"
             fets.append(_fet(
                 fet_id=f"divergencia:{dv['serie_id']}:{dim_1}", regla="divergencia",
-                enunciat=f"{_periode(darrer['date'], freq).capitalize()}: {txt}.",
+                enunciat=enun["ca"], enunciat_es=enun["es"],
                 valor=x, unitat="%", comparacio=comp, valor_referencia=dv["llindar"],
                 data=darrer["date"], series=[dv["serie_id"]], geo_codi=darrer["geo_codi"],
                 cnae_codi=darrer["cnae_codi"], avis=_uneix_avis([darrer["avis"]]),
@@ -407,8 +518,10 @@ def _costat(x, ref, tol):
 # Per sota de mig punt de diferència amb la mediana, la branca hi és a prop:
 # dir que creix "més" per una dècima seria un qualificador que no aguanta.
 _TOL_QUADRANT = 0.5
-_CREIX = {1: "creix més que", 0: "creix com", -1: "creix menys que"}
-_MARGE = {1: "té més marge", 0: "té un marge semblant", -1: "té menys marge"}
+_CREIX = {"ca": {1: "creix més que", 0: "creix com", -1: "creix menys que"},
+          "es": {1: "crece más que", 0: "crece como", -1: "crece menos que"}}
+_MARGE = {"ca": {1: "té més marge", 0: "té un marge semblant", -1: "té menys marge"},
+          "es": {1: "tiene más margen", 0: "tiene un margen similar", -1: "tiene menos margen"}}
 
 
 def _regla_quadrant(con, noms):
@@ -427,13 +540,18 @@ def _regla_quadrant(con, noms):
     for row in t.itertuples():
         c = _costat(row.value_cre, med_cre, _TOL_QUADRANT)
         m = _costat(row.value_mar, med_mar, _TOL_QUADRANT)
-        q = f"{_CREIX[c]} la mediana de branques i {_MARGE[m]}"
-        nom = noms.cnae[row.cnae_codi]
+        cre, mar = _valor(row.value_cre, "pct"), _num(row.value_mar)
+        enun = {
+            "ca": (f"{noms.nom_branca(row.cnae_codi)} ({row.cnae_codi}), {any_}: vendes reals "
+                   f"{cre} i marge (EBE sobre vendes) de {mar}%; {_CREIX['ca'][c]} la "
+                   f"mediana de branques i {_MARGE['ca'][m]}."),
+            "es": (f"{noms.nom_branca(row.cnae_codi, 'es')} ({row.cnae_codi}), {any_}: ventas "
+                   f"reales {cre} y margen (EBE sobre ventas) del {mar}%; {_CREIX['es'][c]} "
+                   f"la mediana de ramas y {_MARGE['es'][m]}."),
+        }
         fets.append(_fet(
             fet_id=f"quadrant_branca:{row.cnae_codi}", regla="quadrant_branca",
-            enunciat=(f"{nom} ({row.cnae_codi}), {any_}: vendes reals "
-                      f"{_valor(row.value_cre, 'pct')} i marge (EBE sobre vendes) de "
-                      f"{_num(row.value_mar)}%; {q}."),
+            enunciat=enun["ca"], enunciat_es=enun["es"],
             valor=row.value_cre, unitat="%", comparacio=comp, valor_referencia=med_cre,
             data=d, series=["der_icm_real_var_anual", "marges_branca_ine"],
             geo_codi="pais:ES", cnae_codi=row.cnae_codi,
@@ -446,10 +564,18 @@ def _regla_quadrant(con, noms):
 
 # Diferències de menys del 3% amb Espanya es llegeixen com a semblants.
 _TOL_SATURACIO = 0.03
-_LOCALS = {1: "més locals per habitant", 0: "una densitat de locals semblant",
-           -1: "menys locals per habitant"}
-_VENDES = {1: "més vendes per habitant", 0: "unes vendes per habitant semblants",
-           -1: "menys vendes per habitant"}
+_LOCALS = {"ca": {1: "més locals per habitant", 0: "una densitat de locals semblant",
+                  -1: "menys locals per habitant"},
+           "es": {1: "más locales por habitante", 0: "una densidad de locales similar",
+                  -1: "menos locales por habitante"}}
+_VENDES = {"ca": {1: "més vendes per habitant", 0: "unes vendes per habitant semblants",
+                  -1: "menys vendes per habitant"},
+           "es": {1: "más ventas por habitante", 0: "unas ventas por habitante similares",
+                  -1: "menos ventas por habitante"}}
+_LECTURA = {"ca": {(1, -1): ": senyal de saturació",
+                   (-1, 1): ": poca densitat de locals per a les vendes que hi ha"},
+            "es": {(1, -1): ": señal de saturación",
+                   (-1, 1): ": poca densidad de locales para las ventas que hay"}}
 
 
 def _regla_saturacio(con, noms):
@@ -477,21 +603,21 @@ def _regla_saturacio(con, noms):
             continue
         loc_c = _costat(row["densitat"] / esp["densitat"], 1, _TOL_SATURACIO)
         ven_c = _costat(row["ven"] / esp["ven"], 1, _TOL_SATURACIO)
-        lectura = (f"respecte de la mitjana espanyola, {_LOCALS[loc_c]} i "
-                   f"{_VENDES[ven_c]}")
-        if (loc_c, ven_c) == (1, -1):
-            lectura += ": senyal de saturació"
-            rell = 2.0
-        elif (loc_c, ven_c) == (-1, 1):
-            lectura += ": poca densitat de locals per a les vendes que hi ha"
-            rell = 1.5
-        else:
-            rell = 1.0
+        rell = {(1, -1): 2.0, (-1, 1): 1.5}.get((loc_c, ven_c), 1.0)
+        dens, ven = _num(row["densitat"]), _num(row["ven"])
+        enun = {
+            "ca": (f"{noms.territori(geo)}, {any_}: {dens} locals de comerç al detall per "
+                   f"1.000 habitants i {ven} euros de 2021 de vendes per habitant; respecte "
+                   f"de la mitjana espanyola, {_LOCALS['ca'][loc_c]} i {_VENDES['ca'][ven_c]}"
+                   f"{_LECTURA['ca'].get((loc_c, ven_c), '')}."),
+            "es": (f"{noms.territori(geo, 'es')}, {any_}: {dens} locales de comercio minorista "
+                   f"por 1.000 habitantes y {ven} euros de 2021 de ventas por habitante; "
+                   f"respecto a la media española, {_LOCALS['es'][loc_c]} y "
+                   f"{_VENDES['es'][ven_c]}{_LECTURA['es'].get((loc_c, ven_c), '')}."),
+        }
         fets.append(_fet(
             fet_id=f"saturacio:{geo}", regla="saturacio",
-            enunciat=(f"{noms.geo[geo]}, {any_}: {_num(row['densitat'])} locals de comerç "
-                      f"al detall per 1.000 habitants i {_num(row['ven'])} euros de 2021 de "
-                      f"vendes per habitant; {lectura}."),
+            enunciat=enun["ca"], enunciat_es=enun["es"],
             valor=row["densitat"], unitat="locals per 1.000 hab.", comparacio=comp,
             valor_referencia=float(esp["densitat"]), data=d,
             series=["locals_ccaa_grup", "empreses_poblacio", "der_vendes_per_habitant_real"],

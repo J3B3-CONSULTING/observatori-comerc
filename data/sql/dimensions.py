@@ -96,6 +96,19 @@ _AGREGATS = {"EU27_2020": "UE-27", "EA20": "Eurozona"}
 _ESPANYA_ALIES = ["Espanya", "espanya", "nacional"]
 
 
+# Noms en castellà per als textos (enunciats dels fets en es). Els territoris i
+# les branques que no hi són fan servir el nom en català.
+NOMS_ES_TERRITORI = {
+    "pais:ES": "España", "agr:EU27_2020": "UE-27", "agr:EA20": "Eurozona",
+    "ccaa:01": "Andalucía", "ccaa:02": "Aragón", "ccaa:03": "Asturias",
+    "ccaa:04": "Illes Balears", "ccaa:05": "Canarias", "ccaa:06": "Cantabria",
+    "ccaa:07": "Castilla y León", "ccaa:08": "Castilla-La Mancha", "ccaa:09": "Cataluña",
+    "ccaa:10": "Comunitat Valenciana", "ccaa:11": "Extremadura", "ccaa:12": "Galicia",
+    "ccaa:13": "Comunidad de Madrid", "ccaa:14": "Región de Murcia", "ccaa:15": "Navarra",
+    "ccaa:16": "País Vasco", "ccaa:17": "La Rioja", "ccaa:18": "Ceuta", "ccaa:19": "Melilla",
+}
+
+
 def _build_territori():
     rows, alies = [], {}
     for codi, nom in _PAISOS.items():
@@ -205,6 +218,35 @@ _BRANCA = {
 }
 
 
+NOMS_ES_BRANCA = {
+    "G": "Comercio al por mayor y al por menor; reparación de vehículos (sección G)",
+    "47": "Comercio minorista (CNAE 47)",
+    "47_SENSE473": "Comercio minorista sin estaciones de servicio",
+    "471": "Establecimientos no especializados (súper e híper)",
+    "4711": "No especializados con predominio de alimentación",
+    "4719": "Otros no especializados (grandes almacenes)",
+    "472": "Alimentación, bebidas y tabaco (especializado)",
+    "4721": "Fruterías", "4722": "Carnicerías", "4723": "Pescaderías",
+    "4724": "Panaderías y pastelerías", "4725": "Bebidas", "4726": "Estancos (tabaco)",
+    "4729": "Otros alimentos",
+    "473": "Combustible (gasolineras)",
+    "474": "Equipos TIC",
+    "475": "Equipamiento del hogar",
+    "476": "Artículos culturales y recreativos",
+    "477": "Otros artículos (moda, calzado, farmacia...)",
+    "478": "Puestos y mercadillos",
+    "479": "Venta fuera de establecimiento (internet, correo...)",
+    "4791": "Venta por correo o internet",
+    "47_ALIM": "Alimentación (4711+472)",
+    "47_EQLLAR": "Equipamiento del hogar (4743+4752+4754+4759+4763)",
+    "47_EQPERS": "Equipamiento personal (4751+4771+4772)",
+    "47_SALUT": "Salud (4773+4774+4775)",
+    "47_RESTA": "Resto (4719+474+475+476+477+478+479)",
+    "47_STS_ALIM": "Alimentación, bebidas y tabaco según Eurostat",
+    "47_STS_NOALIM": "No alimentario sin carburante según Eurostat",
+}
+
+
 def _build_branca():
     rows, alies = [], {}
     for codi, (nom, nivell, pare, etiquetes) in _BRANCA.items():
@@ -226,30 +268,49 @@ DIM_AVIS = [
     dict(avis_codi="dirce_2023",
          text="Posterior al trencament de sèrie del DIRCE del 2023: no és comparable "
               "amb els anys anteriors. Cap variació que travessi el 2023 es pot "
-              "presentar sense aquest avís."),
+              "presentar sense aquest avís.",
+         text_es="Posterior a la ruptura de serie del DIRCE de 2023: no es comparable con "
+                 "los años anteriores. Ninguna variación que cruce 2023 se puede presentar "
+                 "sin este aviso."),
     dict(avis_codi="icm_brut",
          text="ICM en brut, sense corregir d'estacionalitat ni de calendari. Només "
               "són interpretables les variacions interanuals i les mitjanes anuals; "
-              "no quadra amb sèries corregides (CVEC d'Idescat, Eurostat)."),
+              "no quadra amb sèries corregides (CVEC d'Idescat, Eurostat).",
+         text_es="ICM en bruto, sin corregir de estacionalidad ni de calendario. Solo son "
+                 "interpretables las variaciones interanuales y las medias anuales; no "
+                 "cuadra con series corregidas (CVEC de Idescat, Eurostat)."),
     dict(avis_codi="vab_ccaa_estimat",
          text="VAB per CCAA estimat per J3B3 a partir de ràtios nacionals o de la "
-              "comptabilitat regional: no és una dada publicada per l'INE."),
+              "comptabilitat regional: no és una dada publicada per l'INE.",
+         text_es="VAB por CCAA estimado por J3B3 a partir de ratios nacionales o de la "
+                 "contabilidad regional: no es un dato publicado por el INE."),
     dict(avis_codi="seccio_g",
          text="Secció G sencera (comerç a l'engròs, al detall i reparació de "
-              "vehicles): l'INE no la desglossa per al CNAE 47."),
+              "vehicles): l'INE no la desglossa per al CNAE 47.",
+         text_es="Sección G completa (comercio al por mayor, al por menor y reparación de "
+                 "vehículos): el INE no la desglosa para el CNAE 47."),
     dict(avis_codi="tpv_totes_activitats",
          text="Compres amb targeta en TPV de totes les activitats (restauració, "
-              "transport, serveis...), no només del comerç al detall."),
+              "transport, serveis...), no només del comerç al detall.",
+         text_es="Compras con tarjeta en TPV de todas las actividades (restauración, "
+                 "transporte, servicios...), no solo del comercio minorista."),
     dict(avis_codi="deflactor_general",
          text="Deflactat amb l'IPC general, no amb un índex de preus propi del "
-              "comerç ni de la branca: és una aproximació."),
+              "comerç ni de la branca: és una aproximació.",
+         text_es="Deflactado con el IPC general, no con un índice de precios propio del "
+                 "comercio ni de la rama: es una aproximación."),
     dict(avis_codi="abast_diferent",
          text="Ràtio entre dues fonts que no mesuren el mateix univers: serveix per a "
-              "l'ordre de magnitud i la tendència, no com a xifra exacta."),
+              "l'ordre de magnitud i la tendència, no com a xifra exacta.",
+         text_es="Ratio entre dos fuentes que no miden el mismo universo: sirve para el "
+                 "orden de magnitud y la tendencia, no como cifra exacta."),
     dict(avis_codi="lloc_de_venda",
          text="Les vendes es compten on es ven, no on viuen els compradors: el turisme "
               "i la centralitat comercial pugen les vendes per habitant d'una comunitat "
-              "sense que n'hi hagi més demanda local."),
+              "sense que n'hi hagi més demanda local.",
+         text_es="Las ventas se cuentan donde se vende, no donde viven los compradores: el "
+                 "turismo y la centralidad comercial suben las ventas por habitante de una "
+                 "comunidad sin que haya más demanda local."),
 ]
 
 

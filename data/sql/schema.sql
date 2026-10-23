@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS dim_avis (
     avis_codi VARCHAR PRIMARY KEY,
     text      VARCHAR NOT NULL
 );
+ALTER TABLE dim_avis ADD COLUMN IF NOT EXISTS text_es VARCHAR;
 
 -- Derivats (is_derived): com es calculen i de quines sèries surten.
 ALTER TABLE series_metadata ADD COLUMN IF NOT EXISTS formula VARCHAR;
@@ -79,6 +80,8 @@ CREATE TABLE IF NOT EXISTS fets (
     avis             VARCHAR,              -- codis de dim_avis heretats, separats per comes
     rellevancia      DOUBLE                -- ordre orientatiu entre fets
 );
+-- Enunciat en castellà, redactat per la mateixa regla amb les mateixes xifres.
+ALTER TABLE fets ADD COLUMN IF NOT EXISTS enunciat_es VARCHAR;
 
 CREATE TABLE IF NOT EXISTS dim_branca (
     cnae_codi     VARCHAR PRIMARY KEY,   -- G, 47, 471, 4711, 47_ALIM...

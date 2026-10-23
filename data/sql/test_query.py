@@ -104,6 +104,11 @@ def test_get_facts():
     r3 = q.get_facts(serie_id="marges_branca_ine", limit=50)
     _check("filtre per sèrie", r3["returned"] > 0
            and all(f["regla"] == "quadrant_branca" for f in r3["facts"]))
+    r_es = q.get_facts(limit=5, idioma="es")
+    _check("en castellà: mateixos fets, un altre text",
+           r_es["facts"][0]["fet_id"] == r["facts"][0]["fet_id"]
+           and r_es["facts"][0]["enunciat"] != r["facts"][0]["enunciat"])
+    _check("avisos en castellà", all(a["text"] for f in r_es["facts"] for a in f["avisos"]))
     r4 = q.get_facts(regla="inexistent")
     _check("filtre buit -> error amb regles", "error" in r4 and r4["regles_disponibles"])
 
