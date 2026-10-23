@@ -500,6 +500,54 @@ if _recents:
         else:
             st.markdown(_row, unsafe_allow_html=True)
 
+# ─── QUÈ S'HA MOGUT (motor de fets; NOMÉS LOCAL) ───────────────
+# Fets de data/cache/fets.csv. Només les regles més segures, només Espanya (l'ICM
+# per CCAA és en brut), un fet per sèrie. Pendent abans de publicar: els
+# enunciats només existeixen en català.
+_FETS_REGLES = ("extrem", "ratxa", "inflexio", "divergencia")
+_FETS_N = 4
+# sèrie del motor -> dataset de DESTINS (pàgina i pestanya on es comprova)
+_FETS_DESTI = {
+    "icm_real": "icm", "icm_ocupacio": "icm", "der_icm_productivitat_var_anual": "icm",
+    "der_icm_deflactor_vs_ipc": "ipc_coicop",
+    "targetes_tpv_var_import": "targetes_tpv", "der_tpv_menys_icm": "targetes_tpv",
+    "europa_retail_branques_yoy": "europa_retail_mensual",
+    "confianza_consumidor_index_confianca": "confianza_consumidor",
+    "epa_retail_ocupats": "epa_retail",
+}
+
+if os.environ.get("OBSERVATORI_LOCAL", "0") == "1":
+    _fets = load_dataset("fets")
+    if not _fets.empty:
+        _fets = _fets[_fets["regla"].isin(_FETS_REGLES) & (_fets["geo_codi"] == "pais:ES")]
+        _fets = (_fets.sort_values("rellevancia", ascending=False)
+                 .drop_duplicates("series").head(_FETS_N))
+    if not _fets.empty:
+        home_space("m")
+        st.markdown(
+            '<div class="h-sec-eyebrow" style="margin-bottom:6px;">'
+            f'{"Què s’ha mogut · motor de fets (local)" if _ca else "Qué se ha movido · motor de hechos (local)"}'
+            '</div>', unsafe_allow_html=True)
+        for _i, _f in enumerate(_fets.itertuples()):
+            _ds = _FETS_DESTI.get(_f.series)
+            _row = f'<div class="h-upd-row"><span class="l">{_f.enunciat}</span></div>'
+            if _ds in DESTINS:
+                with st.container(key=f"novrow_fet_{_i}"):
+                    _c_txt, _c_link = st.columns([9, 1], vertical_alignment="center", gap="small")
+                    with _c_txt:
+                        st.markdown(_row, unsafe_allow_html=True)
+                    with _c_link:
+                        if st.button(("Veure →" if _ca else "Ver →"), key=f"novlink_fet_{_i}_{_ds}",
+                                     type="tertiary"):
+                            anar_a(_ds)
+            else:
+                st.markdown(_row, unsafe_allow_html=True)
+        _avisos = [a for a in _fets["avisos_text"].dropna().unique() if a]
+        if _avisos:
+            st.markdown(
+                '<div style="font-size:11.5px;color:#9aa6b2;margin-top:8px;line-height:1.5;">'
+                + "<br>".join(_avisos) + '</div>', unsafe_allow_html=True)
+
 home_rule(space_before=44, space_after=0, strong=True)
 home_space("m")
 
