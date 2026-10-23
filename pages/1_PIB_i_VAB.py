@@ -1,10 +1,10 @@
 """Pàgina 1: PIB i Valor Afegit Brut (CNAE 47) — disseny premium consultora"""
 import streamlit as st
-import pandas as pd
 import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from navegacio import tab_destinacio
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
@@ -24,15 +24,7 @@ _ca = st.session_state.lang == "ca"
 _CHART_CONFIG = {"displayModeBar": False, "responsive": True}
 
 
-@st.cache_data(ttl=3600)
-def load_data():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "pib_vab.csv")
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    return pd.DataFrame()
-
-
-df = load_data()
+df = load_dataset("pib_vab")
 
 # ─── HEADER ──────────────────────────────────────────────────
 
@@ -483,14 +475,7 @@ with tab2:
     else:
         exhibit_header(1, "VAB nominal y real del comercio minorista por comunidad autónoma")
 
-    @st.cache_data(ttl=3600)
-    def load_eee_ccaa():
-        p = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "eee_ccaa.csv")
-        if os.path.exists(p):
-            return pd.read_csv(p)
-        return pd.DataFrame()
-
-    df_eee = load_eee_ccaa()
+    df_eee = load_dataset("eee_ccaa")
 
     _vab_nom_col = "vab_eurostat" if "vab_eurostat" in df_eee.columns else "vab_estimat_nominal"
     _vab_real_col = "vab_estimat"

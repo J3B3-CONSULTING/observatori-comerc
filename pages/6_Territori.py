@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from navegacio import tab_destinacio
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
@@ -23,25 +24,14 @@ page_header()
 _ca = st.session_state.lang == "ca"
 
 
-@st.cache_data(ttl=3600)
-def load_data():
-    p = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "eee_ccaa.csv")
-    if os.path.exists(p):
-        return pd.read_csv(p)
-    return pd.DataFrame()
-
 
 @st.cache_data
 def load_geojson():
     return load_geojson_spain_ccaa(with_canaries_inset=True)
 
 
-@st.cache_data(ttl=3600)
 def load_cache_csv(name):
-    p = os.path.join(os.path.dirname(__file__), "..", "data", "cache", name)
-    if os.path.exists(p):
-        return pd.read_csv(p, dtype={"codi_geo": str, "codi_ccaa": str, "cnae": str})
-    return pd.DataFrame()
+    return load_dataset(name, dtype={"codi_geo": str, "codi_ccaa": str, "cnae": str})
 
 
 @st.cache_data
@@ -49,10 +39,10 @@ def load_geojson_prov():
     return load_geojson_spain_provincies(with_canaries_inset=True)
 
 
-df_eee = load_data()
-df_lp = load_cache_csv("locals_provincia.csv")
-df_lg = load_cache_csv("locals_ccaa_grups.csv")
-df_emp = load_cache_csv("empreses.csv")
+df_eee = load_dataset("eee_ccaa")
+df_lp = load_cache_csv("locals_provincia")
+df_lg = load_cache_csv("locals_ccaa_grups")
+df_emp = load_cache_csv("empreses")
 
 # Any del trencament de sèrie DIRCE: es llegeix del CSV, mai escrit a mà
 _trenc = sorted(df_lp.loc[df_lp["travessa_trencament"] == True, "any"].unique()) if not df_lp.empty else []  # noqa: E712

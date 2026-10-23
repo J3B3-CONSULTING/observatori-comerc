@@ -1,10 +1,10 @@
 """Pàgina 5: Digitalització del comerç (CNAE 47) — disseny premium consultora"""
 import streamlit as st
-import pandas as pd
 import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from navegacio import tab_destinacio
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
@@ -24,28 +24,8 @@ _ca = st.session_state.lang == "ca"
 
 _CHART_CONFIG = {"displayModeBar": False, "responsive": True}
 
-_DIG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "digitalitzacio_comerc.csv")
-
-
-@st.cache_data(ttl=3600)
-def load_data():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "ecommerce.csv")
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    return pd.DataFrame()
-
-
-@st.cache_data(ttl=3600)
-def load_dig(sig):  # 'sig' (mida+data del CSV) trenca la cache quan canvien les dades
-    if os.path.exists(_DIG_PATH):
-        return pd.read_csv(_DIG_PATH)
-    return pd.DataFrame()
-
-
-df = load_data()
-_dig_sig = ((os.path.getsize(_DIG_PATH), int(os.path.getmtime(_DIG_PATH)))
-            if os.path.exists(_DIG_PATH) else (0, 0))
-df_dig = load_dig(_dig_sig)
+df = load_dataset("ecommerce")
+df_dig = load_dataset("digitalitzacio_comerc")
 
 # ─── HEADER ──────────────────────────────────────────────────
 

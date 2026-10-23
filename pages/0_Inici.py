@@ -17,6 +17,7 @@ import os, sys
 from datetime import date
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from navegacio import DESTINS, anar_a, oblidar_destinacio
 from style import (inject_css, inject_premium_page_css, inject_home_css,
                    setup_lang, page_header, fnum, fpct, page_meta,
@@ -40,16 +41,8 @@ _NDIR = os.path.join(os.path.dirname(__file__), "..", "data", "newsletter")
 # ─── DADES ─────────────────────────────────────────────────────
 
 
-@st.cache_data(ttl=3600)
 def load_data(name):
-    base = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-    pq = os.path.join(base, f"{name}.parquet")
-    if os.path.exists(pq):
-        return pd.read_parquet(pq)
-    csv = os.path.join(base, f"{name}.csv")
-    if os.path.exists(csv):
-        return pd.read_csv(csv)
-    return pd.DataFrame()
+    return load_dataset(name, fmt="auto")
 
 
 df_pib = load_data("pib_vab")

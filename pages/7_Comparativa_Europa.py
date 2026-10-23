@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from navegacio import tab_destinacio
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
@@ -35,19 +36,13 @@ _CHART_CONFIG = {"displayModeBar": False, "responsive": True}
 
 # ─── Càrrega de dades ──────────────────────────────────────────
 
-@st.cache_data(ttl=3600)
-def _load_csv(name):
-    p = os.path.join(os.path.dirname(__file__), "..", "data", "cache", f"{name}.csv")
-    if os.path.exists(p):
-        return pd.read_csv(p)
-    return pd.DataFrame()
 
-df_europa = _load_csv("europa_vab")              # anual: pes CNAE 47/PIB per país
-df_mens = _load_csv("europa_retail_mensual")     # mensual: índex volum vendes
-df_br = _load_csv("europa_retail_branques")      # mensual: índex volum vendes per branca
-df_total = _load_csv("estructura_retail")        # anual: indicadors estructurals bd_size
-df_mida = _load_csv("estructura_retail_mida")    # anual: per mida d'empresa
-df_surv = _load_csv("estructura_retail_supervivencia")  # anual: supervivència Y1/Y2
+df_europa = load_dataset("europa_vab")              # anual: pes CNAE 47/PIB per país
+df_mens = load_dataset("europa_retail_mensual")     # mensual: índex volum vendes
+df_br = load_dataset("europa_retail_branques")      # mensual: índex volum vendes per branca
+df_total = load_dataset("estructura_retail")        # anual: indicadors estructurals bd_size
+df_mida = load_dataset("estructura_retail_mida")    # anual: per mida d'empresa
+df_surv = load_dataset("estructura_retail_supervivencia")  # anual: supervivència Y1/Y2
 
 # ─── Helpers de presentació LECTURA ────────────────────────────
 

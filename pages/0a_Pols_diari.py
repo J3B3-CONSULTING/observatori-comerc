@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
     source, page_meta, apply_layout, fnum,
@@ -21,15 +22,7 @@ page_header()
 _ca = st.session_state.lang == "ca"
 
 
-@st.cache_data(ttl=3600)
-def load_cdmge():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "cdmge.csv")
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    return pd.DataFrame()
-
-
-df_cdmge = load_cdmge()
+df_cdmge = load_dataset("cdmge")
 
 kicker("Indicador d'alta freqüència · Consum amb grans cadenes" if _ca
        else "Indicador de alta frecuencia · Consumo con grandes cadenas")

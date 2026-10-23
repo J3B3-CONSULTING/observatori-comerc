@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from style import (inject_css, setup_lang, page_header, insight, intro, source, page_meta,
                    fnum, fpct, apply_layout,
                    inject_premium_page_css, kicker, action_title, deck,
@@ -17,14 +18,7 @@ page_header()
 
 _ca = st.session_state.lang == "ca"
 
-@st.cache_data(ttl=3600)
-def load_data():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "municipal.csv")
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    return pd.DataFrame()
-
-df = load_data()
+df = load_dataset("municipal")
 
 kicker("Anàlisi territorial · Escala municipal" if _ca
        else "Análisis territorial · Escala municipal")

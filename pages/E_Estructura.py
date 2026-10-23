@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset, read_dataset, signatura
 from navegacio import tab_destinacio
 from style import (inject_css, setup_lang, page_header, insight, intro, source,
                    fpct, apply_layout, PURPLE, GREEN, GRAY, RED,
@@ -28,16 +29,14 @@ page_header()
 _ca = st.session_state.lang == "ca"
 
 _CACHE = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-_CSV = os.path.join(_CACHE, "estructura_comerc.csv")
 _META = os.path.join(_CACHE, "estructura_comerc_meta.json")
-_PRED = os.path.join(_CACHE, "prediccions_estructura.csv")
 
 
 @st.cache_data(ttl=3600)
 def load_estructura(sig):
-    if not os.path.exists(_CSV):
-        return pd.DataFrame(), {}
-    df = pd.read_csv(_CSV)
+    df = read_dataset("estructura_comerc")
+    if df.empty:
+        return df, {}
     meta = {}
     if os.path.exists(_META):
         try:
@@ -48,19 +47,8 @@ def load_estructura(sig):
     return df, meta
 
 
-@st.cache_data(ttl=3600)
-def load_prediccions(sig):
-    if not os.path.exists(_PRED):
-        return pd.DataFrame()
-    return pd.read_csv(_PRED)
-
-
-_sig = ((os.path.getsize(_CSV), int(os.path.getmtime(_CSV)))
-        if os.path.exists(_CSV) else (0, 0))
-df, meta = load_estructura(_sig)
-_psig = ((os.path.getsize(_PRED), int(os.path.getmtime(_PRED)))
-         if os.path.exists(_PRED) else (0, 0))
-preds = load_prediccions(_psig)
+df, meta = load_estructura(signatura("estructura_comerc", "csv"))
+preds = load_dataset("prediccions_estructura")
 
 kicker("Tendència estructural · Béns i canal online" if _ca
        else "Tendencia estructural · Bienes y canal online")

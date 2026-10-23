@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset
 from navegacio import tab_destinacio
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
@@ -23,21 +24,8 @@ page_header()
 _CHART_CONFIG = {"displayModeBar": False, "responsive": True}
 
 
-@st.cache_data(ttl=3600)
-def load_data():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "productivitat.csv")
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    return pd.DataFrame()
-
-@st.cache_data(ttl=3600)
-def load_marges_branca():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "marges_branca_ine.csv")
-    return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
-
-
-df = load_data()
-df_mb = load_marges_branca()
+df = load_dataset("productivitat")
+df_mb = load_dataset("marges_branca_ine")
 
 _ca = st.session_state.lang == "ca"
 

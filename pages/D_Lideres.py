@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset, read_dataset
 from style import (inject_css, inject_premium_page_css, setup_lang, page_header,
                    insight, source, page_meta, fnum, fpct, apply_layout,
                    kicker, action_title, deck, key_takeaways, exhibit_header,
@@ -23,22 +24,14 @@ page_header()
 
 _ca = st.session_state.lang == "ca"
 _DIR = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-_PATH = os.path.join(_DIR, "lideres_empreses.csv")
-_EAS = os.path.join(_DIR, "subsectors_eas.csv")
-_ICM = os.path.join(_DIR, "icm_distribucion.csv")
-
-
-@st.cache_data(ttl=3600)
-def _load(sig):
-    return pd.read_csv(_PATH) if os.path.exists(_PATH) else pd.DataFrame()
 
 
 @st.cache_data(ttl=3600)
 def _sector_total():
     """Xifra de negoci total del sector CNAE 47 (EAS), últim any. Retorna (any, M€)."""
-    if not os.path.exists(_EAS):
+    e = read_dataset("subsectors_eas")
+    if e.empty:
         return None, None
-    e = pd.read_csv(_EAS)
     e = e[e["codi"] == 47].sort_values("any")
     if e.empty:
         return None, None
@@ -49,9 +42,9 @@ def _sector_total():
 @st.cache_data(ttl=3600)
 def _icm_modos():
     """Sèrie de l'índex de xifra de negoci per modo de distribució (ICM, nominal)."""
-    if not os.path.exists(_ICM):
+    d = read_dataset("icm_distribucion")
+    if d.empty:
         return None
-    d = pd.read_csv(_ICM)
     ix = d[(d["indicador"] == "index") & (d["tipus"] == "nominal")].copy()
     ix["data"] = pd.to_datetime(ix["data"])
     base = ix[ix["any"] == 2016].groupby("modo")["valor"].mean()
@@ -64,8 +57,7 @@ def _icm_modos():
             "last_date": ix["data"].max()}
 
 
-_sig = ((os.path.getsize(_PATH), int(os.path.getmtime(_PATH))) if os.path.exists(_PATH) else (0, 0))
-d = _load(_sig)
+d = load_dataset("lideres_empreses")
 
 kicker("Anatomia de la concentració · Líders del comerç" if _ca
        else "Anatomía de la concentración · Líderes del comercio")

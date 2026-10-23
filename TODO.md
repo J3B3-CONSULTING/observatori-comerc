@@ -160,16 +160,13 @@ Canvia URLs → afegir redireccions o revisar enllaços interns/externs. Aprofit
 
 ---
 
-## Capa comuna de dades (`data/loader.py`)
+## Capa comuna de dades (`data/loader.py`) — FASE 1 FETA 2026-10-23
 
-**Origen**: diagnosi arquitectura 2026-06-12.
+`read_dataset(name, fmt, dtype)` (sense Streamlit; la poden fer servir el motor, l'API del xatbot o l'Observatori Catalunya) i `load_dataset()` (la mateixa amb `@st.cache_data`, amb la mida i la data del fitxer a la clau: un CSV nou del workflow es llegeix sense esperar el ttl i sobren els `sig` fets a mà). 14 pàgines migrades; cadascuna manté el format (CSV o parquet) i els `dtype` que tenia. Verificat renderitzant les 14 pàgines abans i després en ca i es: textos, KPI, gràfics i taules idèntics.
 
-Avui cada pàgina llegeix els CSV directament amb `pd.read_csv`. Crear `data/loader.py` amb una funció `load_dataset(name)` que totes les pàgines usin. Beneficis:
-- Facilita reutilitzar el codi a l'Observatori Catalunya sense duplicar lògica.
-- Punt únic per aplicar @st.cache_resource persistent (en lloc dels @st.cache_data per sessió actuals).
-- Preparació per a una futura API de dades (canvi de `source="csv"` a `source="api"` sense tocar cap pàgina).
-
-**Estimació**: mig dia.
+Pendent:
+- Canviar a parquet les pàgines que encara llegeixen CSV (més ràpid); cal comprovar els tipus de columna pàgina per pàgina, perquè el parquet els desa i alguna comparació (`codi == 47`) en depèn.
+- `style.py`, `navegacio.py` i `modules/` encara llegeixen fitxers pel seu compte (frescor, novetats).
 
 **Corpus per al RAG** (afegit 2026-10-19): les dades geogràfiques de la Fase 3 ja porten `geo_codi` i `nota_trencament`. El primer pas tècnic pendent és fer de `data/loader.py` la capa d'accés unificada al corpus (DuckDB + parquet), que servirà d'entrada a la capa RAG. Avui el corpus només es consulta sèrie a sèrie amb `data/sql/query.py`. **Prioritat**: quan es reprengui la Fase 2.
 

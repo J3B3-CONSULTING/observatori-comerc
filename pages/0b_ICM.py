@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import read_dataset
 from navegacio import tab_destinacio
 from style import (inject_css, inject_premium_page_css, setup_lang, page_header,
                    insight, source, page_meta, fnum, fpct, apply_layout,
@@ -30,45 +31,27 @@ _ca = st.session_state.lang == "ca"
 
 @st.cache_data(ttl=3600)
 def load_icm():
-    base = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-    pq = os.path.join(base, "icm.parquet")
-    if os.path.exists(pq):
-        df = pd.read_parquet(pq)
-    else:
-        csv = os.path.join(base, "icm.csv")
-        if not os.path.exists(csv):
-            return pd.DataFrame()
-        df = pd.read_csv(csv)
+    df = read_dataset("icm", fmt="auto")
+    if df.empty:
+        return df
     df["data"] = pd.to_datetime(df["data"], errors="coerce")
     return df.dropna(subset=["data"])
 
 
 @st.cache_data(ttl=3600)
 def load_icm_distribucion():
-    base = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-    pq = os.path.join(base, "icm_distribucion.parquet")
-    if os.path.exists(pq):
-        df = pd.read_parquet(pq)
-    else:
-        csv = os.path.join(base, "icm_distribucion.csv")
-        if not os.path.exists(csv):
-            return pd.DataFrame()
-        df = pd.read_csv(csv)
+    df = read_dataset("icm_distribucion", fmt="auto")
+    if df.empty:
+        return df
     df["data"] = pd.to_datetime(df["data"], errors="coerce")
     return df.dropna(subset=["data"])
 
 
 @st.cache_data(ttl=3600)
 def load_confianca():
-    base = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-    pq = os.path.join(base, "confianza_consumidor.parquet")
-    if os.path.exists(pq):
-        df = pd.read_parquet(pq)
-    else:
-        csv = os.path.join(base, "confianza_consumidor.csv")
-        if not os.path.exists(csv):
-            return pd.DataFrame()
-        df = pd.read_csv(csv)
+    df = read_dataset("confianza_consumidor", fmt="auto")
+    if df.empty:
+        return df
     df["data"] = pd.to_datetime(df["periode"], format="%Y-%m", errors="coerce")
     return df.dropna(subset=["data"]).sort_values("data")
 
@@ -76,15 +59,9 @@ def load_confianca():
 @st.cache_data(ttl=3600)
 def load_targetes():
     """Compres amb targeta en TPV (Banco de España), trimestral."""
-    base = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-    pq = os.path.join(base, "targetes_tpv.parquet")
-    if os.path.exists(pq):
-        df = pd.read_parquet(pq)
-    else:
-        csv = os.path.join(base, "targetes_tpv.csv")
-        if not os.path.exists(csv):
-            return pd.DataFrame()
-        df = pd.read_csv(csv)
+    df = read_dataset("targetes_tpv", fmt="auto")
+    if df.empty:
+        return df
     df["data"] = pd.to_datetime(df["data"], errors="coerce")
     return df.dropna(subset=["data"]).sort_values("data")
 
@@ -92,15 +69,9 @@ def load_targetes():
 @st.cache_data(ttl=3600)
 def load_ipc_grups():
     """IPC per grups (INE T=76125) amb la variació anual calculada sobre l'índex."""
-    base = os.path.join(os.path.dirname(__file__), "..", "data", "cache")
-    pq = os.path.join(base, "ipc_coicop.parquet")
-    if os.path.exists(pq):
-        df = pd.read_parquet(pq)
-    else:
-        csv = os.path.join(base, "ipc_coicop.csv")
-        if not os.path.exists(csv):
-            return pd.DataFrame()
-        df = pd.read_csv(csv)
+    df = read_dataset("ipc_coicop", fmt="auto")
+    if df.empty:
+        return df
     df["data"] = pd.to_datetime(df["periode"], format="%Y-%m", errors="coerce")
     df["grup_codi"] = pd.to_numeric(df["grup_codi"], errors="coerce")
     df = df.dropna(subset=["data", "ipc", "grup_codi"])

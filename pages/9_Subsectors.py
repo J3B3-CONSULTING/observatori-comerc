@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import read_dataset
 from navegacio import tab_destinacio
 from style import (
     inject_css, inject_premium_page_css, setup_lang, page_header,
@@ -27,10 +28,9 @@ _ca = st.session_state.lang == "ca"
 @st.cache_data(ttl=3600)
 def load_csv(name, code_col=None, code_pad=0):
     """Llegeix CSV i converteix la columna de codi a string (amb zfill opcional per COICOP)."""
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", f"{name}.csv")
-    if not os.path.exists(path):
-        return pd.DataFrame()
-    df = pd.read_csv(path)
+    df = read_dataset(name)
+    if df.empty:
+        return df
     if code_col and code_col in df.columns:
         df[code_col] = df[code_col].astype(str).str.zfill(code_pad) if code_pad else df[code_col].astype(str)
     return df

@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from data.loader import load_dataset, read_dataset
 from navegacio import tab_destinacio
 from style import (inject_css, inject_premium_page_css, setup_lang, page_header,
                    insight, intro, source, page_meta,
@@ -20,51 +21,22 @@ page_header()
 
 _ca = st.session_state.lang == "ca"
 
-_OCU_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "ocupacio_comerc.csv")
-
-
-@st.cache_data(ttl=3600)
-def load_prod():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "productivitat.csv")
-    return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
-
-
-@st.cache_data(ttl=3600)
-def load_empreses():
-    path = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "empreses.csv")
-    return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
-
-
-@st.cache_data(ttl=3600)
-def load_eaes():
-    p = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "eaes.csv")
-    return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
-
-
-@st.cache_data(ttl=3600)
-def load_ocu_sx(sig):  # 'sig' (mida+data del CSV) trenca la cache quan canvien les dades
-    return pd.read_csv(_OCU_PATH) if os.path.exists(_OCU_PATH) else pd.DataFrame()
-
-
 @st.cache_data(ttl=3600)
 def load_epa():
-    p = os.path.join(os.path.dirname(__file__), "..", "data", "cache", "epa_retail.csv")
-    if not os.path.exists(p):
-        return pd.DataFrame()
-    d = pd.read_csv(p)
+    d = read_dataset("epa_retail")
+    if d.empty:
+        return d
     # Inici de trimestre com a data, per a l'eix i per creuar amb l'any anterior
     d["data"] = pd.to_datetime(
         d["any"].astype(str) + "-" + ((d["trimestre"] - 1) * 3 + 1).astype(str) + "-01")
     return d.sort_values(["sexe", "data"])
 
 
-df_prod = load_prod()
-df_emp = load_empreses()
-df_eaes = load_eaes()
+df_prod = load_dataset("productivitat")
+df_emp = load_dataset("empreses")
+df_eaes = load_dataset("eaes")
 df_epa = load_epa()
-_ocu_sig = ((os.path.getsize(_OCU_PATH), int(os.path.getmtime(_OCU_PATH)))
-            if os.path.exists(_OCU_PATH) else (0, 0))
-df_ocu = load_ocu_sx(_ocu_sig)
+df_ocu = load_dataset("ocupacio_comerc")
 
 kicker("Anàlisi estructural · Ocupació" if _ca else "Análisis estructural · Empleo")
 
