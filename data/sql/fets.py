@@ -298,11 +298,14 @@ RANKINGS = [
          etiqueta="persones ocupades per local"),
     dict(serie_id="empreses_per_1000hab", unitat="empreses per 1.000 hab.",
          etiqueta="empreses de comerç al detall per 1.000 habitants"),
-    # Una variació anual canvia molt de posició d'un any a l'altre: pesa la meitat.
+    # Una variació anual canvia molt de posició d'un any a l'altre: pesa la meitat
+    # i demana un salt més gran (les CCAA s'apilen a poques dècimes).
     dict(serie_id="der_icm_real_var_anual", fmt="pct", unitat="%", pes=0.5,
-         etiqueta="creixement de les vendes reals"),
+         min_salt=5, etiqueta="creixement de les vendes reals"),
 ]
 _MIN_SALT = 3
+# Qui encapçala o tanca igual que l'any anterior no és notícia: queda al fons.
+_RELL_CAP_CUA_REPETIT = 0.25
 
 
 def _regla_ranking(con, noms):
@@ -330,7 +333,7 @@ def _regla_ranking(con, noms):
             nom = noms.geo[geo]
             base = dict(series=[r["serie_id"]], geo_codi=geo, cnae_codi="47", data=d1,
                         valor=v1, unitat=r["unitat"], avis=avis)
-            if abs(p1 - p0) >= _MIN_SALT:
+            if abs(p1 - p0) >= r.get("min_salt", _MIN_SALT):
                 verb = "puja" if p1 < p0 else "baixa"
                 comp = f"posició {p0} el {a0}"
                 fets.append(_fet(
@@ -352,7 +355,7 @@ def _regla_ranking(con, noms):
                               f"{_valor(v1, fmt, r['unitat'])}"
                               + (f" ({comp})." if comp else ".")),
                     comparacio=comp, valor_referencia=vesp,
-                    rellevancia=1.0, **base))
+                    rellevancia=_RELL_CAP_CUA_REPETIT if p0 == p1 else 1.0, **base))
     return fets
 
 

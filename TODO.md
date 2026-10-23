@@ -51,7 +51,7 @@ Sèries vigilades (extrem, ratxa, inflexió): `VIGILADES` a `fets.py`. Per afegi
 
 Pendent:
 - Connectar els fets a la tesi de la portada, a la newsletter i a les candidates a predicció (avui només els llegeix `query.py`).
-- Revisar els llindars amb un parell de mesos de fets reals: el rànquing de creixement anual (pes 0,5) encara genera molts salts.
+- ~~Rànquing de creixement anual amb massa salts~~ FET 2026-10-23: salt mínim de 5 llocs per a `der_icm_real_var_anual` (de 10 fets a 6) i rellevància 0,25 per a qui encapçala o tanca igual que l'any anterior (10 de 12). Fets totals: de 82 a 78. La resta de llindars, revisar-los quan hi hagi un parell de mesos més de fets.
 - Regla de divergència CDMGE contra ICM, quan s'aclareixi què mesura cada indicador del CDMGE (taula del pas 2).
 
 ### 4. Fonts noves oficials i gratuïtes
