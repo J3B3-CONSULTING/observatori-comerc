@@ -97,8 +97,8 @@
    "detected_at": "2026-10-14"
   },
   "epa_retail": {
-   "last_data": "2026-T2",
-   "detected_at": "2026-08-03"
+   "last_data": "2026-T3",
+   "detected_at": "2026-10-28"
   },
   "confianza_consumidor": {
    "last_data": "2026-09",
@@ -114,6 +114,13 @@
   }
  },
  "events": [
+  {
+   "dataset": "epa_retail",
+   "label_ca": "EPA — ocupats, aturats i hores",
+   "label_es": "EPA — ocupados, parados y horas",
+   "last_data": "2026-T3",
+   "detected_at": "2026-10-28"
+  },
   {
    "dataset": "europa_retail_mensual",
    "label_ca": "Comerç a Europa (mensual)",

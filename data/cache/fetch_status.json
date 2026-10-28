@@ -27,7 +27,7 @@
   "epa_retail": {
     "estat": "ok",
     "font": "api_ine",
-    "missatge": "222 files"
+    "missatge": "225 files"
   },
   "estructura_comerc": {
     "estat": "ok",
@@ -42,7 +42,7 @@
   "europa_retail_mensual": {
     "estat": "ok",
     "font": "api_eurostat",
-    "missatge": "9005 files"
+    "missatge": "9007 files"
   },
   "europa_vab": {
     "estat": "ok",
