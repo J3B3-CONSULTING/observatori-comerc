@@ -25,12 +25,12 @@
    "detected_at": "2026-05-22"
   },
   "icm": {
-   "last_data": "2026-08-01",
-   "detected_at": "2026-09-29"
+   "last_data": "2026-09-01",
+   "detected_at": "2026-10-29"
   },
   "icm_distribucion": {
-   "last_data": "2026-08-01",
-   "detected_at": "2026-09-29"
+   "last_data": "2026-09-01",
+   "detected_at": "2026-10-29"
   },
   "eaes": {
    "last_data": "2023",
@@ -101,19 +101,47 @@
    "detected_at": "2026-10-28"
   },
   "confianza_consumidor": {
-   "last_data": "2026-09",
-   "detected_at": "2026-09-29"
+   "last_data": "2026-10",
+   "detected_at": "2026-10-29"
   },
   "targetes_tpv": {
    "last_data": "2026-06-30",
    "detected_at": "2026-10-09"
   },
   "europa_retail_branques": {
-   "last_data": "2026-08",
-   "detected_at": "2026-10-21"
+   "last_data": "2026-09",
+   "detected_at": "2026-10-29"
   }
  },
  "events": [
+  {
+   "dataset": "confianza_consumidor",
+   "label_ca": "Confiança del consumidor",
+   "label_es": "Confianza del consumidor",
+   "last_data": "2026-10",
+   "detected_at": "2026-10-29"
+  },
+  {
+   "dataset": "europa_retail_branques",
+   "label_ca": "Comerç a Europa per branca (mensual)",
+   "label_es": "Comercio en Europa por rama (mensual)",
+   "last_data": "2026-09",
+   "detected_at": "2026-10-29"
+  },
+  {
+   "dataset": "icm_distribucion",
+   "label_ca": "ICM per format de venda",
+   "label_es": "ICM por formato de venta",
+   "last_data": "2026-09-01",
+   "detected_at": "2026-10-29"
+  },
+  {
+   "dataset": "icm",
+   "label_ca": "Pols mensual (ICM)",
+   "label_es": "Pulso mensual (ICM)",
+   "last_data": "2026-09-01",
+   "detected_at": "2026-10-29"
+  },
   {
    "dataset": "epa_retail",
    "label_ca": "EPA — ocupats, aturats i hores",
