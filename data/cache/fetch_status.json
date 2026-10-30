@@ -37,12 +37,12 @@
   "europa_retail_branques": {
     "estat": "ok",
     "font": "api_eurostat",
-    "missatge": "18524 files"
+    "missatge": "18532 files"
   },
   "europa_retail_mensual": {
     "estat": "ok",
     "font": "api_eurostat",
-    "missatge": "9010 files"
+    "missatge": "9016 files"
   },
   "europa_vab": {
     "estat": "ok",
